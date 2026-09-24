@@ -262,7 +262,9 @@ function AppInner() {
       {/* FASE 5D — Barra de acciones de mesa: solo con mesa válida + Tomar acá.
           Montaje condicional → al cambiar a Llevar/Regalar se desmonta y su
           activeAction se descarta (reaparece limpia al volver al modo mesa). */}
-      {tableContext.tableId !== null && serviceMode === "bar" && <TableActionBar />}
+      {tableContext.tableId !== null && serviceMode === "bar" && (
+        <TableActionBar tableId={tableContext.tableId} serviceMode={serviceMode} />
+      )}
       <div className={`sel-fab-slot${tableContext.tableId !== null && serviceMode === "bar" ? " sel-fab-slot--raised" : ""}`}>
         <SelectionTrigger />
       </div>

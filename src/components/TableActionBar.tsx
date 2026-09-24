@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useTableContext } from "../hooks/useTableContext";
 import type { ServiceMode } from "../hooks/useTableContext";
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -85,14 +84,23 @@ function CheckIcon() {
 
 const ACTIONS: TableAction[] = ["another-cup", "another-bottle", "accompaniment", "bill"];
 
-export function TableActionBar() {
-  // Única fuente de verdad de mesa/modo (Fase 5A). Chequeo interno defensivo:
-  // App además monta/desmonta este componente para resetear activeAction.
-  const { serviceMode, tableContext } = useTableContext();
+type Props = {
+  tableId: string | null;
+  serviceMode: ServiceMode;
+};
+
+/**
+ * FIX SERVICE MODE — la barra recibe mesa/modo por PROPS desde App (la misma
+ * instancia de estado que maneja ServiceModeSwitch). Antes instanciaba
+ * useTableContext() por su cuenta: una SEGUNDA copia de serviceMode que solo
+ * coincidía gracias al montaje condicional. Ahora existe una única fuente de
+ * verdad y la visibilidad no puede divergir del selector.
+ */
+export function TableActionBar({ tableId, serviceMode }: Props) {
   const { t } = useTranslation();
   const [activeAction, setActiveAction] = useState<TableAction | null>(null);
 
-  if (!isTableBarVisible(tableContext.tableId, serviceMode)) return null;
+  if (!isTableBarVisible(tableId, serviceMode)) return null;
 
   const labelOf = (a: TableAction): string =>
     a === "another-cup"
