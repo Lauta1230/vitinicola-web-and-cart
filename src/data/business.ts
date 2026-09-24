@@ -1,0 +1,16 @@
+export const business = {
+  name: "La Vinícola Mendoza",
+  shortName: "LA VINÍCOLA",
+  city: "Mendoza",
+  address: "Peatonal Sarmiento 110, Ciudad de Mendoza",
+  instagram: "https://www.instagram.com/lavinicola_mdz",
+  instagramHandle: "@lavinicola_mdz",
+  maps: "https://maps.app.goo.gl/ZWBNoPtNnWTM5qQu8",
+  hours: "Mar a Dom · 8:30 a 22:00",
+  phone: null as string | null,
+  heroTitle: "LA VINÍCOLA",
+  heroSubtitle: "Mendoza",
+  heroClaim: "Descubrí nuestra selección",
+  heroCta: "Explorar vinos",
+  catalogCountLabel: "etiquetas",
+} as const;

@@ -1,0 +1,35 @@
+:root {
+  /* Paleta inspirada en La Vinícola - carta azul petróleo + dorado + papel */
+  --navy: #0F2E40;
+  --navy-deep: #0A2230;
+  --navy-soft: #14394F;
+  --gold: #C9A86A;
+  --gold-light: #E6C89A;
+  --gold-muted: #B8955A;
+  --paper: #F8F5EF;
+  --paper-warm: #FFFDF8;
+  --paper-dark: #EDE8DE;
+  --ink: #1A1A1E;
+  --ink-soft: #4A4A4E;
+  --ink-muted: #8A8A8E;
+  --line: #E8E0D0;
+  --line-strong: #D5CBB5;
+  --white: #FFFFFF;
+  --shadow: 0 8px 32px rgba(15, 46, 64, 0.12);
+  --shadow-strong: 0 16px 48px rgba(15, 46, 64, 0.18);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+  --header-h: 56px;
+  --content-max: 1180px;
+  --content-pad: 16px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --header-h: 64px;
+    --content-pad: 24px;
+  }
+}
