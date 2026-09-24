@@ -31,6 +31,10 @@ export const LazySommelier = lazy(() =>
   import("./SommelierExplorer").then((m) => ({ default: m.SommelierExplorer }))
 );
 
+export const LazyWineFlightBuilder = lazy(() =>
+  import("./WineFlightBuilder").then((m) => ({ default: m.WineFlightBuilder }))
+);
+
 export function preloadWineSheet(): void {
   void import("./WineSheet");
 }

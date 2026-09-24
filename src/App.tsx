@@ -7,7 +7,7 @@ import { QuickFilters } from "./components/QuickFilters";
 import { PriceOccasionFilters } from "./components/PriceOccasionFilters";
 import { Catalog } from "./components/Catalog";
 import { Footer } from "./components/Footer";
-import { LazyGiftExplorer, LazySelectionSheet, LazySommelier, LazyWineSheet } from "./components/lazySheets";
+import { LazyGiftExplorer, LazySelectionSheet, LazySommelier, LazyWineFlightBuilder, LazyWineSheet } from "./components/lazySheets";
 import { ServiceModeSwitch } from "./components/ServiceModeSwitch";
 import { TableActionBar } from "./components/TableActionBar";
 import { SelectionTrigger } from "./components/SelectionTrigger";
@@ -42,6 +42,9 @@ function AppInner() {
   // FASE 7 — Sommelier: buscador guiado secundario, disponible en AMBOS modos.
   // Estado local del sheet; no toca filtros ni selección globales.
   const [sommOpen, setSommOpen] = useState(false);
+  // FASE 8 — Flight Builder: comparador local de hasta 3 vinos (ambos modos).
+  // Estado local al sheet: cerrar lo descarta; Mi selección no se modifica.
+  const [flightOpen, setFlightOpen] = useState(false);
   const { t } = useTranslation();
 
   const catalogAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -174,6 +177,22 @@ function AppInner() {
                 <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
               </svg>
               {t("sommelier.trigger")}
+            </button>
+            <button
+              type="button"
+              className="gift-trigger"
+              aria-haspopup="dialog"
+              onClick={() => setFlightOpen(true)}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden>
+                <path d="M5 4v9a3 3 0 0 0 6 0V4" />
+                <path d="M8 16v4" />
+                <path d="M6 20h4" />
+                <path d="M13 4v9a3 3 0 0 0 6 0V4" />
+                <path d="M16 16v4" />
+                <path d="M14 20h4" />
+              </svg>
+              {t("flight.trigger")}
             </button>
           </div>
 
@@ -327,6 +346,15 @@ function AppInner() {
       {sommOpen && (
         <Suspense fallback={<SheetShellFallback />}>
           <LazySommelier onClose={() => setSommOpen(false)} onOpenWine={setSelected} />
+        </Suspense>
+      )}
+      {flightOpen && (
+        <Suspense fallback={<SheetShellFallback />}>
+          <LazyWineFlightBuilder
+            onClose={() => setFlightOpen(false)}
+            onOpenWine={setSelected}
+            onExplore={handleExplore}
+          />
         </Suspense>
       )}
     </div>

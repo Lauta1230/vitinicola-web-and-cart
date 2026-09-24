@@ -444,6 +444,229 @@ img {
   background: var(--paper);
 }
 
+/* =============================================
+   FASE 8 — Wine Flight Builder ("Armá tu trío")
+   Comparador local de hasta 3 vinos (reutiliza overlay/filas)
+   ============================================= */
+.flight-overlay {
+  z-index: var(--z-flight);
+}
+
+.flight-counter {
+  padding: 8px 16px 2px;
+}
+
+.flight-countnum {
+  display: inline-block;
+  padding: 5px 11px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--gold);
+  background: var(--paper-warm);
+  color: var(--navy);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.flight-built {
+  padding: 8px 16px 0;
+  display: grid;
+  gap: 8px;
+}
+
+.flight-remove {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  background: var(--white);
+  color: var(--ink-soft);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.flight-remove:hover {
+  border-color: var(--navy-soft);
+  color: var(--navy);
+}
+
+.flight-remove:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.flight-compare-cta {
+  display: flex;
+  justify-content: center;
+  padding: 10px 16px 0;
+}
+
+/* Comparación: 3 columnas en desktop; scroll horizontal interno en móvil
+   (nunca overflow del body) */
+.flight-compare {
+  padding: 4px 16px 8px;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.flight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.flight-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 8px 10px 12px;
+  min-width: 0;
+}
+
+.flight-openhint {
+  font-size: 10.5px;
+  color: var(--ink-muted);
+  font-weight: 650;
+  letter-spacing: 0.05em;
+}
+
+.flight-facts {
+  margin: 0;
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.flight-facts > div {
+  display: grid;
+  gap: 1px;
+}
+
+.flight-facts dt {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  color: var(--gold-muted);
+  text-transform: uppercase;
+}
+
+.flight-facts dd {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.flight-facts dd.flight-tasting {
+  color: var(--ink-muted);
+  font-weight: 500;
+  font-size: 11.5px;
+}
+
+.flight-diffs {
+  display: grid;
+  gap: 6px;
+}
+
+.flight-diffchips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.flight-cands {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.flight-cand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 6px 6px 6px 12px;
+}
+
+.flight-candinfo {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.flight-insel {
+  justify-self: start;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--navy);
+  background: var(--paper-dark);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+}
+
+.flight-limitnote {
+  padding: 10px 16px 4px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+/* Móvil: comparación con scroll horizontal interno */
+@media (max-width: 600px) {
+  .flight-grid {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(210px, 78%);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+    scroll-snap-type: x proximity;
+  }
+  .flight-col {
+    scroll-snap-align: start;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .flight-remove,
+  .flight-counter .flight-countnum {
+    transition: border-color 150ms ease-out, color 150ms ease-out;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .gift-trigger,
   .gift-chip,
