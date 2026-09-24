@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Inventario Carta La Vinícola Mendoza — BlackXProyect",
+  "description": "Schema para validar inventario extraído literal de la carta. Fuente de verdad: carta adjunta. Reglas: no inventar datos.",
+  "type": "object",
+  "required": ["metadata", "categorias_detectadas", "productos"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["establecimiento", "fecha_analisis", "estado", "total_productos"],
+      "properties": {
+        "establecimiento": { "type": "string" },
+        "direccion": { "type": "string" },
+        "instagram": { "type": "string", "format": "uri" },
+        "google_maps": { "type": "string", "format": "uri" },
+        "fecha_analisis": { "type": "string", "format": "date" },
+        "estado": { "type": "string", "enum": ["PENDIENTE_CARTA_NO_LOCALIZADA", "EN_PROCESO_OCR", "COMPLETO_VALIDADO", "COMPLETO_PENDIENTE_VALIDACION"] },
+        "total_productos": { "type": "integer", "minimum": 0 },
+        "total_paginas": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "categorias_detectadas": {
+      "type": "array",
+      "description": "Encabezados literales de la carta, sin normalizar",
+      "items": {
+        "type": "object",
+        "required": ["nombre_literal", "pagina"],
+        "properties": {
+          "nombre_literal": { "type": "string", "description": "Texto exacto del encabezado, ej: 'TINTOS', 'Blancos', 'ESPUMANTES'" },
+          "pagina": { "type": "integer", "minimum": 1 },
+          "cantidad_productos": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "productos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "pagina_carta", "categoria_carta", "nombre_completo_visible", "precio_texto_original", "estado_lectura"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^VIN-[0-9]{3,}$" },
+          "pagina_carta": { "type": "integer", "minimum": 1, "description": "Número de página del PDF/imagen original" },
+          "categoria_carta": { "type": "string", "description": "Categoría literal donde aparece" },
+          "nombre_completo_visible": { "type": "string", "description": "Nombre exacto como aparece en carta, sin normalizar" },
+          "bodega": { "type": ["string", "null"], "description": "Solo si está explícita en carta" },
+          "linea_etiqueta": { "type": ["string", "null"] },
+          "cepa_varietal": { "type": ["string", "null"], "description": "Solo si está explícita, no inferida" },
+          "anada": { "type": ["string", "integer", "null"], "description": "Solo si está visible, ej: 2022" },
+          "presentacion": { "type": ["string", "null"], "description": "Ej: 750ml, 375ml, Copa, Botella — solo si está explícita" },
+          "precio_texto_original": { "type": "string", "description": "Texto exacto del precio, ej: '$ 12.500'" },
+          "precio": { "type": ["number", "null"], "description": "Valor numérico normalizado, null si ilegible/dudoso sin validar" },
+          "moneda": { "type": ["string", "null"], "description": "Ej: ARS, $ — solo si visible" },
+          "categoria": { "type": "string" },
+          "descripcion": { "type": ["string", "null"], "description": "Texto descriptivo exacto si existe" },
+          "otros_datos_explicitos": { "type": ["string", "null"], "description": "Puntajes, origen, alcohol, etc. solo si están impresos" },
+          "estado_lectura": { "type": "string", "enum": ["OK", "DUDOSO", "ILEGIBLE", "POSIBLE_DUPLICADO"] },
+          "notas_validacion": { "type": ["string", "null"] },
+          "coordenadas_recorte": { "type": ["string", "null"], "description": "Opcional: referencia visual del recorte para dudosos" }
+        }
+      }
+    },
+    "dudosos_ilegibles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "campo", "valor_transcripto", "motivo"],
+        "properties": {
+          "id": { "type": "string" },
+          "campo": { "type": "string" },
+          "valor_transcripto": { "type": "string" },
+          "motivo": { "type": "string" },
+          "pagina": { "type": "integer" }
+        }
+      }
+    },
+    "inconsistencias": {
+      "type": "array",
+      "description": "Lista de inconsistencias detectadas sin corregir",
+      "items": {
+        "type": "object",
+        "required": ["tipo", "descripcion", "productos_afectados"],
+        "properties": {
+          "tipo": { "type": "string", "enum": ["DUPLICADO", "PRECIO_DIFERENTE", "NOMBRE_VARIANTE", "CATEGORIA_DUPLICADA", "PRECIO_FALTANTE", "OTRO"] },
+          "descripcion": { "type": "string" },
+          "productos_afectados": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

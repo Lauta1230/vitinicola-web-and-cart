@@ -1,0 +1,58 @@
+{
+  "metadata": {
+    "establecimiento": "La Vinícola Mendoza",
+    "direccion": "Peatonal Sarmiento 110, Ciudad de Mendoza, Mendoza, Argentina",
+    "instagram": "https://www.instagram.com/lavinicola_mdz",
+    "google_maps": "https://maps.app.goo.gl/ZWBNoPtNnWTM5qQu8",
+    "fecha_analisis": "2026-09-24",
+    "estado": "PENDIENTE_CARTA_NO_LOCALIZADA",
+    "total_productos": 0,
+    "total_paginas": 0,
+    "branch": "arena/01a0d0be-vitinicola-web-and-cart",
+    "commit_base": "34bf47aa3244a3c0dc598264003ddc84cbbf2409",
+    "reglas": [
+      "NO inventar vinos",
+      "NO inventar bodegas",
+      "NO inventar cepas",
+      "NO inventar precios",
+      "NO inventar añadas",
+      "NO completar información faltante como si fuera oficial",
+      "Mantener exactamente los nombres y precios visibles",
+      "Marcar dudoso/ilegible si no puede leerse con seguridad",
+      "No eliminar duplicados sin antes indicarlo"
+    ],
+    "nota": "Carta adjunta no localizada en workspace el 2026-09-24. Estructura preparada. Re-subir PDF/JPG para completar."
+  },
+  "categorias_detectadas": [],
+  "productos": [],
+  "campos_disponibles": [
+    "nombre_del_vino",
+    "bodega",
+    "linea_etiqueta",
+    "cepa_varietal",
+    "anada",
+    "presentacion",
+    "precio",
+    "precio_texto_original",
+    "moneda",
+    "categoria",
+    "descripcion",
+    "otros_datos_explicitos",
+    "pagina_carta",
+    "estado_lectura",
+    "notas_validacion"
+  ],
+  "campos_faltantes_por_producto": [],
+  "dudosos_ilegibles": [],
+  "inconsistencias": [],
+  "paginas": [],
+  "resumen": {
+    "cantidad_total_productos_detectados": 0,
+    "categorias_detectadas": [],
+    "campos_disponibles": [],
+    "campos_faltantes": [],
+    "textos_precios_dudosos_ilegibles": [],
+    "paginas_donde_aparecen_datos": [],
+    "inconsistencias_encontradas": []
+  }
+}
