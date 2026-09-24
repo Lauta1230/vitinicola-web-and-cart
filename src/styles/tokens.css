@@ -25,6 +25,12 @@
   --header-h: 52px;
   --content-max: 1180px;
   --content-pad: 16px;
+  /* z-index escala centralizada */
+  --z-header: 40;
+  --z-winery: 60;
+  --z-wine: 70;
+  --z-locale-overlay: 100;
+  --z-locale-content: 101;
 }
 
 @media (min-width: 768px) {
