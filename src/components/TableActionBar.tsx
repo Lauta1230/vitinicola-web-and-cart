@@ -1,6 +1,13 @@
 import { useState } from "react";
 import type { ServiceMode } from "../hooks/useTableContext";
 import { useTranslation } from "../hooks/useTranslation";
+import {
+  buildTableActionMessage,
+  buildWhatsAppUrl,
+  openWhatsAppExternal,
+  resolveBusinessWhatsAppPhone,
+  type TableIntent,
+} from "../utils/whatsapp";
 
 /**
  * FASE 5D — Barra de acciones contextuales de mesa.
@@ -9,8 +16,14 @@ import { useTranslation } from "../hooks/useTranslation";
  * Cuatro acciones de servicio: Otra copa · Otra botella · Acompañamiento · Cuenta.
  *
  * Representa únicamente INTENCIÓN local del visitante (qué acción marcó).
- * NO envía nada, NO abre WhatsApp, NO simula pedido enviado/recibido/en camino.
+ * NO simula pedido enviado/recibido/en camino.
  * Sin datos comerciales (precios, disponibilidad): solo acciones de servicio.
+ *
+ * FASE 9 — Cuando hay una intención activa Y el negocio tiene WhatsApp
+ * confirmado en config, se ofrece "Continuar en WhatsApp": construye el
+ * mensaje de consulta de mesa (solo al click) y abre wa.me. La web nunca
+ * afirma que el mozo recibió nada. Sin número confirmado la barra funciona
+ * exactamente como en Fase 5D (selector de intención, sin CTA que falle).
  *
  * Estado: `activeAction` exclusivo (una sola acción o ninguna). El componente
  * se monta condicionalmente desde App: al cambiar a "Llevar / Regalar" se
@@ -102,6 +115,19 @@ export function TableActionBar({ tableId, serviceMode }: Props) {
 
   if (!isTableBarVisible(tableId, serviceMode)) return null;
 
+  // FASE 9: CTA de conversión solo con intención activa + número confirmado.
+  const waPhone = resolveBusinessWhatsAppPhone();
+
+  /** B15–B19: mensaje construido SOLO al click, con el tableId ya validado. */
+  const handleContinueWhatsApp = () => {
+    if (activeAction === null || waPhone === null || tableId === null) return;
+    const message = buildTableActionMessage({ t, tableId, action: activeAction as TableIntent });
+    const url = buildWhatsAppUrl(waPhone, message ?? "");
+    if (url !== null) openWhatsAppExternal(url);
+    // Sin feedback posterior (B36) y sin limpiar la intención (B55: el
+    // visitante puede volver del navegador y su estado sigue intacto).
+  };
+
   const labelOf = (a: TableAction): string =>
     a === "another-cup"
       ? t("tableActions.anotherCup")
@@ -138,6 +164,14 @@ export function TableActionBar({ tableId, serviceMode }: Props) {
             );
           })}
         </div>
+        {/* FASE 9 — B25/B43: sin mezclar la selección del visitante con la
+            intención de mesa ("otra botella" NO adjunta Mi selección) y sin
+            CTA si el negocio no tiene WhatsApp confirmado. */}
+        {activeAction !== null && waPhone !== null && (
+          <button type="button" className="tbar-wa" onClick={handleContinueWhatsApp}>
+            <span aria-hidden>💬</span> {t("whatsapp.continue")}
+          </button>
+        )}
       </div>
     </nav>
   );

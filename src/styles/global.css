@@ -1448,3 +1448,118 @@ img {
       border-color 150ms ease-out, transform 120ms ease-out;
   }
 }
+
+/* ══════════ FASE 9 — Conversión WhatsApp (SelectionSheet + TableActionBar) ══════════
+   Jerarquía (B44): sin botón gigante; CTA comercial solo con número confirmado. */
+
+.sel-conv {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* CTA primario de consulta: mismo lenguaje navy/gold que .sel-cta */
+.sel-consult {
+  width: 100%;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--navy);
+  color: var(--paper-warm);
+  border: 1px solid var(--navy-soft);
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sel-consult:hover {
+  background: var(--navy-soft);
+}
+
+.sel-consult:active {
+  transform: translateY(0.5px);
+}
+
+.sel-consult:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Secundario: compartir o copiar (según disponibilidad de Web Share) */
+.sel-share {
+  width: 100%;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--navy);
+  border: 1px solid var(--line-strong);
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sel-share:hover {
+  border-color: var(--gold);
+}
+
+.sel-share:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Feedback honesto de copiado: reservado con nbsp para no saltar el layout */
+.sel-conv-feedback {
+  min-height: 16px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold-muted);
+  text-align: center;
+}
+
+/* CTA de mesa: aparece bajo la fila SOLO con intención activa + WhatsApp confirmado */
+.tbar-wa {
+  margin-top: 8px;
+  width: 100%;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  background: var(--navy);
+  color: var(--paper-warm);
+  border: 1px solid var(--navy-soft);
+  font-weight: 800;
+  font-size: 13.5px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tbar-wa:hover {
+  background: var(--navy-soft);
+}
+
+.tbar-wa:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sel-consult,
+  .sel-share,
+  .tbar-wa {
+    transition: background-color 150ms ease-out, border-color 150ms ease-out,
+      transform 120ms ease-out;
+  }
+}

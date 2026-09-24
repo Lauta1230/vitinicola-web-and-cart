@@ -5,6 +5,7 @@ import { business } from "../data/business";
 import { useLocale } from "../context/LocaleContext";
 import { useSelection, normalizeWineId } from "../context/SelectionContext";
 import { useTranslation } from "../hooks/useTranslation";
+import { buildWhatsAppUrl } from "../utils/whatsapp";
 
 type Props = {
   wine: Wine | null;
@@ -122,10 +123,13 @@ export function WineSheet({ wine, onClose }: Props) {
     }, 1500);
   };
 
-  const shareText = encodeURIComponent(
+  // FASE 9 — comparte por WhatsApp sin teléfono (el usuario elige contacto):
+  // misma URL que siempre (wa.me/?text=), ahora centralizada en el helper
+  // único buildWhatsAppUrl (encode garantizado; null si el texto fuera vacío).
+  const waHref = buildWhatsAppUrl(
+    null,
     `Te recomiendo de ${business.name}: ${wine.nombre_completo_visible} — ${wine.bodega} — ${priceLabel} — ${business.maps}`
   );
-  const waHref = `https://wa.me/?text=${shareText}`;
 
   return (
     <div
@@ -472,27 +476,29 @@ export function WineSheet({ wine, onClose }: Props) {
               </span>
             </button>
 
-            <a
-              href={waHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                height: 44,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                borderRadius: 12,
-                background: "#25D366",
-                color: "white",
-                fontWeight: 800,
-                fontSize: 14,
-                border: "1px solid #1FB955",
-                textDecoration: "none",
-              }}
-            >
-              <span aria-hidden>💬</span> {t("wine.shareWA")}
-            </a>
+            {waHref !== null && (
+              <a
+                href={waHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  height: 44,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  borderRadius: 12,
+                  background: "#25D366",
+                  color: "white",
+                  fontWeight: 800,
+                  fontSize: 14,
+                  border: "1px solid #1FB955",
+                  textDecoration: "none",
+                }}
+              >
+                <span aria-hidden>💬</span> {t("wine.shareWA")}
+              </a>
+            )}
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <a

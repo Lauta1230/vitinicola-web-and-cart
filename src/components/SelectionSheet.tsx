@@ -5,6 +5,15 @@ import { useSelection } from "../context/SelectionContext";
 import { useLocale } from "../context/LocaleContext";
 import { formatPrice } from "../utils/formatPrice";
 import { useTranslation } from "../hooks/useTranslation";
+import type { ServiceMode } from "../hooks/useTableContext";
+import {
+  buildSelectionMessage,
+  buildSelectionShareText,
+  buildWhatsAppUrl,
+  openWhatsAppExternal,
+  resolveBusinessWhatsAppPhone,
+  type SelectionLine,
+} from "../utils/whatsapp";
 
 /**
  * FASE 5B — Panel "Mi selección" (lista de preselección editorial).
@@ -13,6 +22,14 @@ import { useTranslation } from "../hooks/useTranslation";
  * sombras, patrón de ESC/scroll-lock/foco inicial y click-fuera para cerrar.
  * Sin totales, sin cantidades, sin checkout: solo reconocer el vino y quitarlo.
  * La ficha completa sigue viviendo en WineSheet (que esta fase NO modifica).
+ *
+ * FASE 9 — Conversión (consultar → preparar solicitud → abrir WhatsApp):
+ *  - "Consultar por WhatsApp" SOLO si hay vinos Y el negocio tiene número
+ *    confirmado en config; si no, el CTA no existe (nunca un botón que falla).
+ *  - "Compartir selección" (Web Share) o "Copiar selección" (fallback): la
+ *    selección se comparte SIN mesa ni datos de sesión (B27).
+ *  - El mensaje se construye SOLO al pulsar el CTA (B38) y la web NUNCA
+ *    afirma que envió nada: abrir WhatsApp es todo lo que hace.
  */
 
 // Índice id → vino creado UNA vez a nivel módulo (nunca por render).
@@ -24,9 +41,11 @@ const EXIT_MS = 140;
 type Props = {
   /** CTA del empty state: cierra el panel y navega con la lógica existente de App. */
   onExplore?: () => void;
+  /** Modo de servicio activo (App es la única fuente de verdad): ajusta el intro del mensaje. */
+  serviceMode?: ServiceMode;
 };
 
-export function SelectionSheet({ onExplore }: Props) {
+export function SelectionSheet({ onExplore, serviceMode = "takeaway" }: Props) {
   const { selectedIds, selectedCount, remove, clear, isOpen, close } = useSelection();
   const { currency, rateType } = useLocale();
   const { t } = useTranslation();
@@ -34,6 +53,8 @@ export function SelectionSheet({ onExplore }: Props) {
   const scrollYRef = useRef<number>(0);
   const [closing, setClosing] = useState(false);
   const closeTimerRef = useRef<number | null>(null);
+  const [copyFeedback, setCopyFeedback] = useState<"copied" | "error" | null>(null);
+  const copyTimerRef = useRef<number | null>(null);
 
   // Cierre con animación de salida corta; luego cierra el estado real.
   const requestClose = () => {
@@ -56,6 +77,10 @@ export function SelectionSheet({ onExplore }: Props) {
       if (closeTimerRef.current !== null) {
         window.clearTimeout(closeTimerRef.current);
         closeTimerRef.current = null;
+      }
+      if (copyTimerRef.current !== null) {
+        window.clearTimeout(copyTimerRef.current);
+        copyTimerRef.current = null;
       }
     },
     []
@@ -111,6 +136,66 @@ export function SelectionSheet({ onExplore }: Props) {
   const handleExploreCta = () => {
     window.setTimeout(() => onExplore?.(), 120);
     requestClose();
+  };
+
+  // ── FASE 9: conversión (todo se construye SOLO al pulsar el CTA) ──
+
+  /** Teléfono del negocio ya normalizado; `null` → CTA comercial oculto. */
+  const waPhone = resolveBusinessWhatsAppPhone();
+  const canWebShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
+
+  /** Líneas del mensaje: SOLO datos reales (nombre, bodega, precio en moneda activa). */
+  const selectionLines = (): SelectionLine[] =>
+    items.map((w) => ({
+      nombre: w.nombre_completo_visible,
+      bodega: w.bodega ?? w.categoria_carta,
+      precio: formatPrice(w.precio, currency, rateType),
+    }));
+
+  const showCopyFeedback = (state: "copied" | "error") => {
+    setCopyFeedback(state);
+    if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = window.setTimeout(() => {
+      copyTimerRef.current = null;
+      setCopyFeedback(null);
+    }, 2200);
+  };
+
+  /** Fallback B26/B28: copiar al portapapeles con feedback honesto. */
+  const handleCopyText = (text: string) => {
+    if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+      showCopyFeedback("error");
+      return;
+    }
+    navigator.clipboard
+      .writeText(text)
+      .then(() => showCopyFeedback("copied"))
+      .catch(() => showCopyFeedback("error"));
+  };
+
+  /** B26/B50: Web Share si existe; cancelar NO es error; fallo → copiar. */
+  const handleShareSelection = () => {
+    if (items.length === 0) return;
+    const text = buildSelectionShareText({ t, wines: selectionLines() });
+    if (canWebShare) {
+      navigator
+        .share({ text })
+        .catch((err: unknown) => {
+          if ((err as DOMException)?.name === "AbortError") return;
+          handleCopyText(text);
+        });
+      return;
+    }
+    handleCopyText(text);
+  };
+
+  /** B6/B10: consulta al negocio. La web solo construye y abre: nunca "enviado". */
+  const handleConsultWhatsApp = () => {
+    if (waPhone === null || items.length === 0) return;
+    const message = buildSelectionMessage({ t, wines: selectionLines(), currency, intent: serviceMode });
+    const url = buildWhatsAppUrl(waPhone, message);
+    if (url !== null) openWhatsAppExternal(url);
+    // Sin feedback posterior (B36): el cambio de contexto a WhatsApp basta.
   };
 
   return (
@@ -209,6 +294,38 @@ export function SelectionSheet({ onExplore }: Props) {
               );
             })}
           </ul>
+        )}
+
+        {items.length > 0 && (
+          <div className="sel-conv">
+            {/* CTA comercial SOLO con número confirmado (B10/B31/B37): sin config no existe */}
+            {waPhone !== null && (
+              <button
+                type="button"
+                className="sel-consult"
+                aria-label={t("whatsapp.consultAria")}
+                onClick={handleConsultWhatsApp}
+              >
+                <span aria-hidden>💬</span> {t("whatsapp.consultSelection")}
+              </button>
+            )}
+            {/* B26: compartir con terceros (sin mesa ni sesión, B27); sin Web Share → copiar */}
+            <button
+              type="button"
+              className="sel-share"
+              aria-label={canWebShare ? t("whatsapp.shareAria") : t("whatsapp.copySelection")}
+              onClick={handleShareSelection}
+            >
+              {canWebShare ? t("whatsapp.shareSelection") : t("whatsapp.copySelection")}
+            </button>
+            <p className="sel-conv-feedback" aria-live="polite">
+              {copyFeedback === "copied"
+                ? t("whatsapp.copied")
+                : copyFeedback === "error"
+                  ? t("whatsapp.copyError")
+                  : "\u00A0"}
+            </p>
+          </div>
         )}
       </div>
     </div>

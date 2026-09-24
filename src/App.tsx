@@ -335,7 +335,7 @@ function AppInner() {
       </div>
       {selectionOpen && (
         <Suspense fallback={<SheetShellFallback />}>
-          <LazySelectionSheet onExplore={handleExplore} />
+          <LazySelectionSheet onExplore={handleExplore} serviceMode={serviceMode} />
         </Suspense>
       )}
       {serviceMode === "takeaway" && giftOpen && (

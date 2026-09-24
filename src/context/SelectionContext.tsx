@@ -90,9 +90,34 @@ export type SelectionContextValue = {
 
 const SelectionContext = createContext<SelectionContextValue | null>(null);
 
-export function SelectionProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(selectionReducer, { ids: [] } as SelectionState);
-  const [isOpen, setIsOpen] = useState(false);
+/**
+ * FASE 9 — `initialIds`/`initialOpen` opcionales (solo harness de QA/SSR y
+ * futuros puntos de entrada): normalizan una vez al montar; duplicados e ids
+ * inválidos se descartan. En la app real no se pasan → comportamiento idéntico.
+ */
+export function SelectionProvider({
+  children,
+  initialIds,
+  initialOpen,
+}: {
+  children: React.ReactNode;
+  initialIds?: readonly string[];
+  initialOpen?: boolean;
+}) {
+  const [state, dispatch] = useReducer(selectionReducer, { ids: [] } as SelectionState, (init) => {
+    if (!initialIds || initialIds.length === 0) return init;
+    const seen = new Set<string>();
+    const ids: string[] = [];
+    for (const raw of initialIds) {
+      const id = normalizeWineId(raw);
+      if (id !== null && !seen.has(id)) {
+        seen.add(id);
+        ids.push(id);
+      }
+    }
+    return { ids } as SelectionState;
+  });
+  const [isOpen, setIsOpen] = useState<boolean>(() => initialOpen === true);
 
   const selectedIds = state.ids;
 
