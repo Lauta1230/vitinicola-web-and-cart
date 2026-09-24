@@ -12,7 +12,7 @@ type Props = {
   onOccasionChange: (occ: OccasionFilter) => void;
 };
 
-export function PriceOccasionFilters({ priceRange, onPriceRangeChange, occasion, onOccasionChange }: Props) {
+function AdvancedFiltersPanel({ priceRange, onPriceRangeChange, occasion, onOccasionChange }: Props) {
   const { t } = useTranslation();
   const { currency, rateType } = useLocale();
   const [minInput, setMinInput] = useState(String(priceRange[0]));
@@ -310,6 +310,73 @@ export function PriceOccasionFilters({ priceRange, onPriceRangeChange, occasion,
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * FASE 5.5 — Progressive Disclosure Nivel 3 (Bloques 17-22).
+ * Precio/ocasión pasan a capa secundaria detrás de "Filtrar": misma lógica de
+ * Fase 4 intacta (bandas, límites, conteos). El toggle es estado local (no
+ * afecta al catálogo). El botón comunica filtros activos con número visible
+ * (no solo color) + aria-expanded/aria-controls. "Limpiar filtros" acá SOLO
+ * limpia precio+ocasión: preserva búsqueda, facet, modo, idioma y selección.
+ */
+export function PriceOccasionFilters(props: Props) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  const isPriceFiltered = props.priceRange[0] !== MIN_PRICE || props.priceRange[1] !== MAX_PRICE;
+  const isOccasionFiltered = props.occasion !== "all";
+  const activeCount = (isPriceFiltered ? 1 : 0) + (isOccasionFiltered ? 1 : 0);
+
+  const clearAdvanced = () => {
+    props.onPriceRangeChange([MIN_PRICE, MAX_PRICE]);
+    props.onOccasionChange("all");
+  };
+
+  return (
+    <div className="adv-wrap">
+      <div className="adv-head">
+        <button
+          type="button"
+          className="adv-toggle"
+          aria-expanded={open}
+          aria-controls="advanced-filters-panel"
+          onClick={() => setOpen((v) => !v)}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
+            <path d="M4 6h16" />
+            <path d="M7 12h10" />
+            <path d="M10 18h4" />
+          </svg>
+          <span>{t("filters.advanced")}</span>
+          {activeCount > 0 && (
+            <span className="adv-count" aria-hidden>
+              {activeCount}
+            </span>
+          )}
+        </button>
+        {activeCount > 0 && (
+          <button type="button" className="adv-clear" onClick={clearAdvanced}>
+            {t("filters.clear")}
+          </button>
+        )}
+      </div>
+      {open && (
+        <div id="advanced-filters-panel" className="adv-panel">
+          <AdvancedFiltersPanel {...props} />
+        </div>
+      )}
     </div>
   );
 }

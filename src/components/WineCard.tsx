@@ -2,6 +2,7 @@ import type { Wine } from "../data/catalog";
 import { formatPrice } from "../utils/formatPrice";
 import { useLocale } from "../context/LocaleContext";
 import { useTranslation } from "../hooks/useTranslation";
+import { preloadWineSheet } from "./lazySheets";
 
 type Props = {
   wine: Wine;
@@ -26,6 +27,7 @@ export function WineCard({ wine, onOpen, showBodega = true }: Props) {
           onOpen(wine);
         }
       }}
+      onFocus={() => preloadWineSheet()}
       aria-label={`${wine.nombre_completo_visible}, ${wine.bodega} — ${priceLabel}`}
       style={{
         background: "var(--paper-warm)",
@@ -42,6 +44,7 @@ export function WineCard({ wine, onOpen, showBodega = true }: Props) {
         minHeight: 64,
       }}
       onPointerEnter={(e) => {
+        preloadWineSheet(); // FASE 5.5 — primer open inmediato (chunk ya cargado)
         const el = e.currentTarget as HTMLElement;
         el.style.background = "var(--white)";
         el.style.borderLeftColor = "var(--gold)";

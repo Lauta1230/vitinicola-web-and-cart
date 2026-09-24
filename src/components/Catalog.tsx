@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import type { Wine } from "../data/catalog";
 import { WineCard } from "./WineCard";
 import { useTranslation } from "../hooks/useTranslation";
@@ -17,7 +17,13 @@ type Props = {
   onClearFilters?: () => void;
 };
 
-export function Catalog({ wines, query, bodega, facet, priceRange, occasion, onOpen, onClearFilters }: Props) {
+/**
+ * FASE 5.5 — memo: con props estables (filtered via useMemo, callbacks via
+ * useCallback), cambios de service mode / selección / sheets / acciones de mesa
+ * NO re-renderizan el listado. Cambios de idioma/moneda sí llegan por contexto
+ * a los consumidores (WineCard usa useLocale/useTranslation directamente).
+ */
+export const Catalog = memo(function Catalog({ wines, query, bodega, facet, priceRange, occasion, onOpen, onClearFilters }: Props) {
   const { t } = useTranslation();
 
   const grouped = useMemo(() => {
@@ -164,6 +170,7 @@ export function Catalog({ wines, query, bodega, facet, priceRange, occasion, onO
         <section
           key={bodegaName}
           aria-label={bodegaName}
+          className="catalog-section"
           style={{
             background: "transparent",
             border: "none",
@@ -253,4 +260,4 @@ export function Catalog({ wines, query, bodega, facet, priceRange, occasion, onO
       ))}
     </div>
   );
-}
+});

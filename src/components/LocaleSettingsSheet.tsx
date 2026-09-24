@@ -316,7 +316,7 @@ export function LocaleSettingsSheet({ triggerLabel }: Props) {
           display: "inline-flex",
           alignItems: "center",
           gap: 6,
-          height: 32,
+          height: 44,
           padding: "0 10px",
           borderRadius: 999,
           border: open ? "1px solid var(--navy)" : "1px solid var(--line-strong)",

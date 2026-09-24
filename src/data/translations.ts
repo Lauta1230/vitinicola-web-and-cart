@@ -49,6 +49,7 @@ export const translations = {
     },
     filters: {
       barTitle: "FILTROS RÁPIDOS",
+      advanced: "Filtrar",
       all: "Todos",
       malbec: "Malbec",
       cabernet: "Cabernet Sauvignon",
@@ -241,6 +242,7 @@ export const translations = {
     },
     filters: {
       barTitle: "FILTROS RÁPIDOS",
+      advanced: "Filtrar",
       all: "Todos",
       malbec: "Malbec",
       cabernet: "Cabernet Sauvignon",
@@ -433,6 +435,7 @@ export const translations = {
     },
     filters: {
       barTitle: "QUICK FILTERS",
+      advanced: "Filter",
       all: "All",
       malbec: "Malbec",
       cabernet: "Cabernet Sauvignon",

@@ -71,6 +71,116 @@ img {
 }
 
 /* =============================================
+   FASE 5.5 — Progressive Disclosure Nivel 3 ("Filtrar")
+   + content-visibility del catálogo
+   ============================================= */
+.adv-wrap {
+  display: grid;
+  gap: 8px;
+}
+
+.adv-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.adv-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-strong);
+  background: var(--paper-warm);
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.adv-toggle:hover {
+  background: var(--white);
+  border-color: var(--navy-soft);
+}
+
+.adv-toggle:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.adv-toggle[aria-expanded="true"] {
+  background: var(--navy);
+  border-color: var(--navy-soft);
+  color: var(--paper-warm);
+}
+
+.adv-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--navy);
+  color: var(--paper-warm);
+  display: inline-grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.adv-toggle[aria-expanded="true"] .adv-count {
+  background: var(--gold);
+  color: var(--navy);
+}
+
+.adv-clear {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: var(--navy);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 8px;
+  text-decoration: underline dotted rgba(15, 46, 64, 0.35);
+  text-underline-offset: 3px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.adv-clear:hover {
+  color: var(--gold-muted);
+}
+
+.adv-clear:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Secciones de bodega fuera de viewport: render/paint diferido (nativo).
+   No altera geometría de scroll, anclas ni sticky: es por sección interna. */
+.catalog-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 420px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .adv-toggle,
+  .adv-clear {
+    transition: background-color 150ms ease-out, color 150ms ease-out,
+      border-color 150ms ease-out;
+  }
+  .adv-panel {
+    animation: sel-fade-in 150ms ease-out;
+  }
+}
+
+/* =============================================
    FASE 5A — Contexto de servicio (Wine Bar)
    ServiceModeSwitch: segmented control editorial
    ============================================= */

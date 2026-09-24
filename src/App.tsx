@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
 import { SearchBar } from "./components/SearchBar";
@@ -6,12 +6,11 @@ import { WineryExplorer } from "./components/WineryExplorer";
 import { QuickFilters } from "./components/QuickFilters";
 import { PriceOccasionFilters } from "./components/PriceOccasionFilters";
 import { Catalog } from "./components/Catalog";
-import { WineSheet } from "./components/WineSheet";
 import { Footer } from "./components/Footer";
+import { LazySelectionSheet, LazyWineSheet } from "./components/lazySheets";
 import { ServiceModeSwitch } from "./components/ServiceModeSwitch";
 import { TableActionBar } from "./components/TableActionBar";
 import { SelectionTrigger } from "./components/SelectionTrigger";
-import { SelectionSheet } from "./components/SelectionSheet";
 import { allWines, bodegaList } from "./data/catalog";
 import { filterWines } from "./utils/search";
 import { countFacets } from "./data/styleFacets";
@@ -20,7 +19,7 @@ import type { Wine } from "./data/catalog";
 import type { FacetKey } from "./data/styleFacets";
 import type { OccasionFilter } from "./data/priceBands";
 import { useTableContext } from "./hooks/useTableContext";
-import { SelectionProvider } from "./context/SelectionContext";
+import { SelectionProvider, useSelection } from "./context/SelectionContext";
 import { useTranslation } from "./hooks/useTranslation";
 import "./styles/global.css";
 
@@ -34,6 +33,9 @@ function AppInner() {
   // FASE 5A — contexto de servicio: mesa desde ?mesa= (lectura única) + modo bar/takeaway.
   // No interactúa con filtros, búsqueda, idioma, moneda ni scroll.
   const { serviceMode, tableContext, setServiceMode } = useTableContext();
+  // FASE 5.5 — solo isOpen: el toggle de selección re-renderiza AppInner, pero
+  // Catalog (memo) y su listado de 659 cards quedan fuera del render.
+  const { isOpen: selectionOpen } = useSelection();
   const { t } = useTranslation();
 
   const catalogAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -55,7 +57,10 @@ function AppInner() {
     [query, bodega, facet, priceRange, occasion]
   );
 
-  const handleExplore = () => {
+  // FASE 5.5 — callbacks estables: permiten memo(Catalog) sin rerenders del
+  // listado cuando cambian estados no relacionados (service mode, selección,
+  // WineSheet, acciones de mesa).
+  const handleExplore = useCallback(() => {
     const anchor = catalogAnchorRef.current;
     if (!anchor) return;
     const header = document.querySelector("header") as HTMLElement | null;
@@ -63,15 +68,15 @@ function AppInner() {
     const padding = 12;
     const top = anchor.getBoundingClientRect().top + window.scrollY - headerH - padding;
     window.scrollTo({ top, behavior: "smooth" });
-  };
+  }, []);
 
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     setQuery("");
     setBodega(null);
     setFacet("all");
     setPriceRange([MIN_PRICE, MAX_PRICE]);
     setOccasion("all");
-  };
+  }, []);
 
   const isPriceFiltered = priceRange[0] !== MIN_PRICE || priceRange[1] !== MAX_PRICE;
   const isOccasionFiltered = occasion !== "all";
@@ -246,7 +251,11 @@ function AppInner() {
 
       <Footer />
 
-      <WineSheet wine={selected} onClose={() => setSelected(null)} />
+      {selected && (
+        <Suspense fallback={<SheetShellFallback />}>
+          <LazyWineSheet wine={selected} onClose={() => setSelected(null)} />
+        </Suspense>
+      )}
 
       {/* FASE 5B — Mi selección: trigger flotante + panel. AppInner NO consume
           el contexto: toggle/cambios de selección nunca re-renderean el catálogo. */}
@@ -257,12 +266,56 @@ function AppInner() {
       <div className={`sel-fab-slot${tableContext.tableId !== null && serviceMode === "bar" ? " sel-fab-slot--raised" : ""}`}>
         <SelectionTrigger />
       </div>
-      <SelectionSheet onExplore={handleExplore} />
+      {selectionOpen && (
+        <Suspense fallback={<SheetShellFallback />}>
+          <LazySelectionSheet onExplore={handleExplore} />
+        </Suspense>
+      )}
     </div>
   );
 }
 
 import { LocaleProvider } from "./context/LocaleContext";
+
+/**
+ * FASE 5.5 — fallback de Suspense: shell mínimo del sheet (sin layout shift,
+ * sin "Cargando aplicación..."). Con preload por hover/focus casi nunca se ve.
+ */
+function SheetShellFallback() {
+  return (
+    <div
+      role="presentation"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 70,
+        background: "rgba(10, 34, 48, 0.52)",
+        backdropFilter: "blur(6px)",
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        padding: 12,
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 640,
+          height: 160,
+          background: "var(--paper-warm)",
+          borderRadius: "20px 20px 16px 16px",
+          border: "1px solid var(--line)",
+          boxShadow: "var(--shadow-strong)",
+          display: "flex",
+          justifyContent: "center",
+          paddingTop: 10,
+        }}
+      >
+        <span style={{ width: 36, height: 4, borderRadius: 999, background: "var(--line-strong)", display: "block" }} />
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   return (
