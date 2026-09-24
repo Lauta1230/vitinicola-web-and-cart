@@ -2,16 +2,20 @@ import { useMemo } from "react";
 import type { Wine } from "../data/catalog";
 import { WineCard } from "./WineCard";
 import { useTranslation } from "../hooks/useTranslation";
+import type { FacetKey } from "../data/styleFacets";
 
 type Props = {
   wines: Wine[];
   query: string;
   bodega: string | null;
+  facet: FacetKey;
   onOpen: (wine: Wine) => void;
+  onClearFilters?: () => void;
 };
 
-export function Catalog({ wines, query, bodega, onOpen }: Props) {
+export function Catalog({ wines, query, bodega, facet, onOpen, onClearFilters }: Props) {
   const { t } = useTranslation();
+
   const grouped = useMemo(() => {
     const map = new Map<string, Wine[]>();
     for (const w of wines) {
@@ -22,9 +26,50 @@ export function Catalog({ wines, query, bodega, onOpen }: Props) {
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0], "es", { sensitivity: "base" }));
   }, [wines]);
 
-  const isFiltered = query.trim().length > 0 || bodega !== null;
+  const isFiltered = query.trim().length > 0 || bodega !== null || facet !== "all";
+
+  // Autor / Boutique: mostrar selección en preparación (no inventar)
+  if (facet === "authorBoutique") {
+    return (
+      <div
+        style={{
+          background: "var(--white)",
+          border: "1px solid var(--line)",
+          borderRadius: 16,
+          padding: 24,
+          textAlign: "center",
+          color: "var(--ink-soft)",
+        }}
+      >
+        <div style={{ fontSize: 28, marginBottom: 8 }}>✦</div>
+        <div style={{ fontWeight: 800, color: "var(--navy)", fontSize: 16 }}>{t("filters.preparingTitle")}</div>
+        <div style={{ fontSize: 13, marginTop: 6, color: "var(--ink-muted)", lineHeight: 1.5 }}>{t("filters.preparingDesc")}</div>
+        {onClearFilters && (
+          <button
+            onClick={onClearFilters}
+            style={{
+              marginTop: 14,
+              height: 36,
+              padding: "0 16px",
+              borderRadius: 999,
+              border: "1px solid var(--navy)",
+              background: "var(--navy)",
+              color: "var(--paper-warm)",
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: "pointer",
+            }}
+          >
+            {t("filters.clear")}
+          </button>
+        )}
+      </div>
+    );
+  }
 
   if (wines.length === 0) {
+    // Vacío por filtros + búsqueda + bodega
+    const isFacetActive = facet !== "all";
     return (
       <div
         style={{
@@ -37,12 +82,36 @@ export function Catalog({ wines, query, bodega, onOpen }: Props) {
         }}
       >
         <div style={{ fontSize: 28, marginBottom: 8 }}>🔍</div>
-        <div style={{ fontWeight: 800, color: "var(--navy)", fontSize: 16 }}>{t("catalog.noResultsTitle")}</div>
-        <div
-          style={{ fontSize: 13, marginTop: 6, color: "var(--ink-muted)", lineHeight: 1.5 }}
-          dangerouslySetInnerHTML={{ __html: t("catalog.noResultsDesc") }}
-        />
-        <div style={{ fontSize: 12, marginTop: 6, color: "var(--ink-muted)" }}>{t("catalog.noResultsHint")}</div>
+        <div style={{ fontWeight: 800, color: "var(--navy)", fontSize: 16 }}>
+          {isFacetActive ? t("filters.emptyTitle") : t("catalog.noResultsTitle")}
+        </div>
+        <div style={{ fontSize: 13, marginTop: 6, color: "var(--ink-muted)", lineHeight: 1.5 }}>
+          {isFacetActive ? t("filters.emptyDesc") : (
+            <span dangerouslySetInnerHTML={{ __html: t("catalog.noResultsDesc") }} />
+          )}
+        </div>
+        {!isFacetActive && (
+          <div style={{ fontSize: 12, marginTop: 6, color: "var(--ink-muted)" }}>{t("catalog.noResultsHint")}</div>
+        )}
+        {onClearFilters && (
+          <button
+            onClick={onClearFilters}
+            style={{
+              marginTop: 14,
+              height: 36,
+              padding: "0 16px",
+              borderRadius: 999,
+              border: "1px solid var(--line-strong)",
+              background: "var(--white)",
+              color: "var(--navy)",
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: "pointer",
+            }}
+          >
+            {t("filters.clear")}
+          </button>
+        )}
       </div>
     );
   }
@@ -64,7 +133,7 @@ export function Catalog({ wines, query, bodega, onOpen }: Props) {
           }}
         >
           <span style={{ width: 18, height: 1, background: "var(--line-strong)", display: "inline-block" }} />
-          {t("catalog.results", { count: wines.length })}
+          {facet !== "all" ? t("filters.results", { count: wines.length }) : t("catalog.results", { count: wines.length })}
           <span style={{ width: 18, height: 1, background: "var(--line-strong)", display: "inline-block" }} />
         </div>
         <div

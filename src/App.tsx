@@ -3,24 +3,40 @@ import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
 import { SearchBar } from "./components/SearchBar";
 import { WineryExplorer } from "./components/WineryExplorer";
+import { QuickFilters } from "./components/QuickFilters";
 import { Catalog } from "./components/Catalog";
 import { WineSheet } from "./components/WineSheet";
 import { Footer } from "./components/Footer";
 import { allWines, bodegaList } from "./data/catalog";
 import { filterWines } from "./utils/search";
+import { countFacets } from "./data/styleFacets";
 import type { Wine } from "./data/catalog";
+import type { FacetKey } from "./data/styleFacets";
 import { useTranslation } from "./hooks/useTranslation";
 import "./styles/global.css";
 
 function AppInner() {
   const [query, setQuery] = useState("");
   const [bodega, setBodega] = useState<string | null>(null);
+  const [facet, setFacet] = useState<FacetKey>("all");
   const [selected, setSelected] = useState<Wine | null>(null);
   const { t } = useTranslation();
 
   const catalogAnchorRef = useRef<HTMLDivElement | null>(null);
 
-  const filtered = useMemo(() => filterWines(allWines, query, bodega), [query, bodega]);
+  const facetCounts = useMemo(() => {
+    const c = countFacets(allWines);
+    return {
+      all: allWines.length,
+      malbec: c.malbec,
+      cabernetSauvignon: c.cabernetSauvignon,
+      whiteOrRose: c.whiteOrRose,
+      sparkling: c.sparkling,
+      authorBoutique: c.authorBoutique,
+    } as Record<FacetKey, number>;
+  }, []);
+
+  const filtered = useMemo(() => filterWines(allWines, query, bodega, facet), [query, bodega, facet]);
 
   const handleExplore = () => {
     const anchor = catalogAnchorRef.current;
@@ -31,6 +47,14 @@ function AppInner() {
     const top = anchor.getBoundingClientRect().top + window.scrollY - headerH - padding;
     window.scrollTo({ top, behavior: "smooth" });
   };
+
+  const clearAllFilters = () => {
+    setQuery("");
+    setBodega(null);
+    setFacet("all");
+  };
+
+  const hasActiveFilters = query.trim().length > 0 || bodega !== null || facet !== "all";
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -59,7 +83,11 @@ function AppInner() {
             bodegaActiva={bodega}
             onClearBodega={() => setBodega(null)}
           />
+
+          <QuickFilters active={facet} onSelect={setFacet} counts={facetCounts} />
+
           <WineryExplorer totalBodegas={bodegaList.length} activeBodega={bodega} onSelect={setBodega} />
+
           <div
             style={{
               display: "flex",
@@ -71,9 +99,10 @@ function AppInner() {
               letterSpacing: "0.06em",
               fontWeight: 600,
               paddingLeft: 2,
+              flexWrap: "wrap",
             }}
           >
-            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
               <span
                 aria-hidden
                 style={{
@@ -81,18 +110,24 @@ function AppInner() {
                   height: 1,
                   background: "var(--line-strong)",
                   display: "inline-block",
+                  flex: "0 0 auto",
                 }}
               />
-              {bodega
+              {facet !== "all"
+                ? `${t(`filters.${facet === "cabernetSauvignon" ? "cabernet" : facet === "whiteOrRose" ? "whiteRose" : facet === "authorBoutique" ? "author" : facet}` as any)} · ${filtered.length} ${t("common.vinos")}`
+                : bodega
                 ? t("catalog.bodegaCount", { bodega, count: filtered.length })
                 : t("catalog.filteredCount", { filtered: filtered.length, total: bodegaList.length })}
+              {facet !== "all" && bodega && (
+                <span style={{ opacity: 0.7 }}>
+                  {" "}
+                  · {bodega}
+                </span>
+              )}
             </span>
-            {(query || bodega) && (
+            {hasActiveFilters && (
               <button
-                onClick={() => {
-                  setQuery("");
-                  setBodega(null);
-                }}
+                onClick={clearAllFilters}
                 style={{
                   height: 28,
                   padding: "0 10px",
@@ -103,16 +138,24 @@ function AppInner() {
                   fontWeight: 700,
                   fontSize: 11,
                   cursor: "pointer",
+                  flex: "0 0 auto",
                 }}
               >
-                {t("catalog.clearFilters")}
+                {t("filters.clear")}
               </button>
             )}
           </div>
         </div>
 
         <div style={{ paddingTop: 12, paddingBottom: 16 }}>
-          <Catalog wines={filtered} query={query} bodega={bodega} onOpen={setSelected} />
+          <Catalog
+            wines={filtered}
+            query={query}
+            bodega={bodega}
+            facet={facet}
+            onOpen={setSelected}
+            onClearFilters={clearAllFilters}
+          />
         </div>
 
         <div
