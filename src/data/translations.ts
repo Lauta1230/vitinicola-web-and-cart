@@ -170,6 +170,17 @@ export const translations = {
       takeaway: "Llevar / Regalar",
       table: "Mesa",
     },
+    selection: {
+      title: "Mi selección",
+      countOne: "1 vino guardado",
+      countMany: "{count} vinos guardados",
+      emptyTitle: "Todavía no guardaste ningún vino.",
+      emptyDesc: "Explorá la carta y guardá los que quieras comparar o consultar después.",
+      remove: "Quitar",
+      removeAria: "Quitar {nombre} de mi selección",
+      clear: "Vaciar selección",
+      openAria: "Abrir mi selección",
+    },
   },
   pt: {
     common: {
@@ -338,6 +349,17 @@ export const translations = {
       takeaway: "Levar / Presentear",
       table: "Mesa",
     },
+    selection: {
+      title: "Minha seleção",
+      countOne: "1 vinho guardado",
+      countMany: "{count} vinhos guardados",
+      emptyTitle: "Você ainda não salvou nenhum vinho.",
+      emptyDesc: "Explore a carta e salve os que quiser comparar ou consultar depois.",
+      remove: "Remover",
+      removeAria: "Remover {nome} da minha seleção",
+      clear: "Esvaziar seleção",
+      openAria: "Abrir minha seleção",
+    },
   },
   en: {
     common: {
@@ -505,6 +527,17 @@ export const translations = {
       here: "Enjoy here",
       takeaway: "Takeaway / Gift",
       table: "Table",
+    },
+    selection: {
+      title: "My selection",
+      countOne: "1 wine saved",
+      countMany: "{count} wines saved",
+      emptyTitle: "You haven't saved any wines yet.",
+      emptyDesc: "Explore the list and save the wines you want to compare or ask about later.",
+      remove: "Remove",
+      removeAria: "Remove {name} from my selection",
+      clear: "Clear selection",
+      openAria: "Open my selection",
     },
   },
 } as const;

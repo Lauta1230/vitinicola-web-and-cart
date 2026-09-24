@@ -9,6 +9,8 @@ import { Catalog } from "./components/Catalog";
 import { WineSheet } from "./components/WineSheet";
 import { Footer } from "./components/Footer";
 import { ServiceModeSwitch } from "./components/ServiceModeSwitch";
+import { SelectionTrigger } from "./components/SelectionTrigger";
+import { SelectionSheet } from "./components/SelectionSheet";
 import { allWines, bodegaList } from "./data/catalog";
 import { filterWines } from "./utils/search";
 import { countFacets } from "./data/styleFacets";
@@ -17,6 +19,7 @@ import type { Wine } from "./data/catalog";
 import type { FacetKey } from "./data/styleFacets";
 import type { OccasionFilter } from "./data/priceBands";
 import { useTableContext } from "./hooks/useTableContext";
+import { SelectionProvider } from "./context/SelectionContext";
 import { useTranslation } from "./hooks/useTranslation";
 import "./styles/global.css";
 
@@ -243,6 +246,13 @@ function AppInner() {
       <Footer />
 
       <WineSheet wine={selected} onClose={() => setSelected(null)} />
+
+      {/* FASE 5B — Mi selección: trigger flotante + panel. AppInner NO consume
+          el contexto: toggle/cambios de selección nunca re-renderean el catálogo. */}
+      <div className="sel-fab-slot">
+        <SelectionTrigger />
+      </div>
+      <SelectionSheet onExplore={handleExplore} />
     </div>
   );
 }
@@ -252,7 +262,9 @@ import { LocaleProvider } from "./context/LocaleContext";
 export default function App() {
   return (
     <LocaleProvider>
-      <AppInner />
+      <SelectionProvider>
+        <AppInner />
+      </SelectionProvider>
     </LocaleProvider>
   );
 }
