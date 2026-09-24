@@ -1,7 +1,8 @@
 import { business } from "../data/business";
 import { LocaleSettingsSheet } from "./LocaleSettingsSheet";
+import { TableContextBadge } from "./TableContextBadge";
 
-export function Header() {
+export function Header({ tableId }: { tableId?: string | null }) {
   return (
     <header
       style={{
@@ -80,6 +81,8 @@ export function Header() {
             </span>
           </span>
         </a>
+
+        {tableId ? <TableContextBadge tableId={tableId} /> : null}
 
         <div style={{ display: "flex", alignItems: "center", gap: 6, flex: "0 0 auto" }}>
           <LocaleSettingsSheet />

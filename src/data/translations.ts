@@ -164,6 +164,12 @@ export const translations = {
     empty: {
       noWines: "Sin vinos para mostrar",
     },
+    service: {
+      prompt: "¿Cómo lo vas a disfrutar?",
+      here: "Tomar acá",
+      takeaway: "Llevar / Regalar",
+      table: "Mesa",
+    },
   },
   pt: {
     common: {
@@ -326,6 +332,12 @@ export const translations = {
     empty: {
       noWines: "Sem vinhos para mostrar",
     },
+    service: {
+      prompt: "Como vai aproveitar?",
+      here: "Tomar aqui",
+      takeaway: "Levar / Presentear",
+      table: "Mesa",
+    },
   },
   en: {
     common: {
@@ -487,6 +499,12 @@ export const translations = {
     },
     empty: {
       noWines: "No wines to show",
+    },
+    service: {
+      prompt: "How will you enjoy it?",
+      here: "Enjoy here",
+      takeaway: "Takeaway / Gift",
+      table: "Table",
     },
   },
 } as const;

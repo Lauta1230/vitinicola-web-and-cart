@@ -8,6 +8,7 @@ import { PriceOccasionFilters } from "./components/PriceOccasionFilters";
 import { Catalog } from "./components/Catalog";
 import { WineSheet } from "./components/WineSheet";
 import { Footer } from "./components/Footer";
+import { ServiceModeSwitch } from "./components/ServiceModeSwitch";
 import { allWines, bodegaList } from "./data/catalog";
 import { filterWines } from "./utils/search";
 import { countFacets } from "./data/styleFacets";
@@ -15,6 +16,7 @@ import { MIN_PRICE, MAX_PRICE } from "./data/priceBands";
 import type { Wine } from "./data/catalog";
 import type { FacetKey } from "./data/styleFacets";
 import type { OccasionFilter } from "./data/priceBands";
+import { useTableContext } from "./hooks/useTableContext";
 import { useTranslation } from "./hooks/useTranslation";
 import "./styles/global.css";
 
@@ -25,6 +27,9 @@ function AppInner() {
   const [priceRange, setPriceRange] = useState<[number, number]>([MIN_PRICE, MAX_PRICE]);
   const [occasion, setOccasion] = useState<OccasionFilter>("all");
   const [selected, setSelected] = useState<Wine | null>(null);
+  // FASE 5A — contexto de servicio: mesa desde ?mesa= (lectura única) + modo bar/takeaway.
+  // No interactúa con filtros, búsqueda, idioma, moneda ni scroll.
+  const { serviceMode, tableContext, setServiceMode } = useTableContext();
   const { t } = useTranslation();
 
   const catalogAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -79,7 +84,7 @@ function AppInner() {
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <Header />
+      <Header tableId={tableContext.tableId} />
       <Hero totalWines={allWines.length} totalBodegas={bodegaList.length} onExplore={handleExplore} />
 
       <div id="catalogo" ref={catalogAnchorRef} aria-label="Inicio del catálogo" />
@@ -104,6 +109,9 @@ function AppInner() {
             bodegaActiva={bodega}
             onClearBodega={() => setBodega(null)}
           />
+
+          {/* FASE 5A — contexto de uso (identidad → búsqueda → contexto → carta) */}
+          <ServiceModeSwitch mode={serviceMode} onChange={setServiceMode} />
 
           <QuickFilters active={facet} onSelect={setFacet} counts={facetCounts} />
 
