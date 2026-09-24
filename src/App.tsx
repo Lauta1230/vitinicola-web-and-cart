@@ -9,6 +9,7 @@ import { Catalog } from "./components/Catalog";
 import { WineSheet } from "./components/WineSheet";
 import { Footer } from "./components/Footer";
 import { ServiceModeSwitch } from "./components/ServiceModeSwitch";
+import { TableActionBar } from "./components/TableActionBar";
 import { SelectionTrigger } from "./components/SelectionTrigger";
 import { SelectionSheet } from "./components/SelectionSheet";
 import { allWines, bodegaList } from "./data/catalog";
@@ -249,7 +250,11 @@ function AppInner() {
 
       {/* FASE 5B — Mi selección: trigger flotante + panel. AppInner NO consume
           el contexto: toggle/cambios de selección nunca re-renderean el catálogo. */}
-      <div className="sel-fab-slot">
+      {/* FASE 5D — Barra de acciones de mesa: solo con mesa válida + Tomar acá.
+          Montaje condicional → al cambiar a Llevar/Regalar se desmonta y su
+          activeAction se descarta (reaparece limpia al volver al modo mesa). */}
+      {tableContext.tableId !== null && serviceMode === "bar" && <TableActionBar />}
+      <div className={`sel-fab-slot${tableContext.tableId !== null && serviceMode === "bar" ? " sel-fab-slot--raised" : ""}`}>
         <SelectionTrigger />
       </div>
       <SelectionSheet onExplore={handleExplore} />

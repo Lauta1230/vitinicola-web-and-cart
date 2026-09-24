@@ -186,6 +186,14 @@ export const translations = {
       removed: "Quitado de mi selección",
       removeCta: "Quitar de mi selección",
     },
+    tableActions: {
+      navAria: "Acciones de mesa",
+      anotherCup: "Otra copa",
+      anotherBottle: "Otra botella",
+      accompaniment: "Acompañamiento",
+      bill: "Cuenta",
+      selected: "Seleccionaste {action}",
+    },
   },
   pt: {
     common: {
@@ -370,6 +378,14 @@ export const translations = {
       removed: "Removido da minha seleção",
       removeCta: "Remover da minha seleção",
     },
+    tableActions: {
+      navAria: "Ações da mesa",
+      anotherCup: "Outra taça",
+      anotherBottle: "Outra garrafa",
+      accompaniment: "Acompanhamento",
+      bill: "Conta",
+      selected: "Você selecionou {action}",
+    },
   },
   en: {
     common: {
@@ -553,6 +569,14 @@ export const translations = {
       added: "Added to my selection",
       removed: "Removed from my selection",
       removeCta: "Remove from my selection",
+    },
+    tableActions: {
+      navAria: "Table service actions",
+      anotherCup: "Another glass",
+      anotherBottle: "Another bottle",
+      accompaniment: "Snack",
+      bill: "Bill",
+      selected: "You selected {action}",
     },
   },
 } as const;

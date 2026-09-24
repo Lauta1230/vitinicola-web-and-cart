@@ -1,0 +1,136 @@
+import { useState } from "react";
+import { useTableContext } from "../hooks/useTableContext";
+import type { ServiceMode } from "../hooks/useTableContext";
+import { useTranslation } from "../hooks/useTranslation";
+
+/**
+ * FASE 5D — Barra de acciones contextuales de mesa.
+ *
+ * Visible SOLO con mesa válida + serviceMode "bar" (Tomar acá).
+ * Cuatro acciones de servicio: Otra copa · Otra botella · Acompañamiento · Cuenta.
+ *
+ * Representa únicamente INTENCIÓN local del visitante (qué acción marcó).
+ * NO envía nada, NO abre WhatsApp, NO simula pedido enviado/recibido/en camino.
+ * Sin datos comerciales (precios, disponibilidad): solo acciones de servicio.
+ *
+ * Estado: `activeAction` exclusivo (una sola acción o ninguna). El componente
+ * se monta condicionalmente desde App: al cambiar a "Llevar / Regalar" se
+ * desmonta y el estado se descarta → al volver al modo mesa reaparece limpio.
+ *
+ * La mesa proviene EXCLUSIVAMENTE de useTableContext (parser seguro de 5A):
+ * sin URLSearchParams propios, sin copias de mesa, sin HTML interpretado.
+ * Precio/barra: barra es agnóstica de moneda e idioma salvo textos i18n.
+ */
+
+/** Acciones exactas de la barra (sin quinta acción). */
+export type TableAction = "another-cup" | "another-bottle" | "accompaniment" | "bill";
+
+/** Visibilidad pura (testeable): solo mesa válida + modo bar. */
+export function isTableBarVisible(tableId: string | null, serviceMode: ServiceMode): boolean {
+  return tableId !== null && serviceMode === "bar";
+}
+
+/** Toggle exclusivo puro (testeable): misma acción → null; distinta → reemplaza. */
+export function nextActiveAction(current: TableAction | null, action: TableAction): TableAction | null {
+  return current === action ? null : action;
+}
+
+// ── Iconografía local: SVG inline monocromáticos 16px (sin librerías) ──
+
+function GlassIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M8 21h8" />
+      <path d="M12 15v6" />
+      <path d="M7 3h10l-.7 8.05A4.7 4.7 0 0 1 12 15a4.7 4.7 0 0 1-4.3-3.95L7 3Z" />
+    </svg>
+  );
+}
+
+function BottleIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M10 2h4v4c0 1.2.5 1.8 1.1 2.5A5.6 5.6 0 0 1 16.5 12v7a2 2 0 0 1-2 2h-5a2 2 0 0 1-2-2v-7c0-1.4.5-2.6 1.4-3.5C9.5 7.8 10 7.2 10 6V2Z" />
+      <path d="M10 2h4" />
+    </svg>
+  );
+}
+
+function PlateIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="4.5" />
+    </svg>
+  );
+}
+
+function BillIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21V3Z" />
+      <path d="M9.5 8.5h5" />
+      <path d="M9.5 12.5h5" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
+const ACTIONS: TableAction[] = ["another-cup", "another-bottle", "accompaniment", "bill"];
+
+export function TableActionBar() {
+  // Única fuente de verdad de mesa/modo (Fase 5A). Chequeo interno defensivo:
+  // App además monta/desmonta este componente para resetear activeAction.
+  const { serviceMode, tableContext } = useTableContext();
+  const { t } = useTranslation();
+  const [activeAction, setActiveAction] = useState<TableAction | null>(null);
+
+  if (!isTableBarVisible(tableContext.tableId, serviceMode)) return null;
+
+  const labelOf = (a: TableAction): string =>
+    a === "another-cup"
+      ? t("tableActions.anotherCup")
+      : a === "another-bottle"
+        ? t("tableActions.anotherBottle")
+        : a === "accompaniment"
+          ? t("tableActions.accompaniment")
+          : t("tableActions.bill");
+
+  const iconOf = (a: TableAction) =>
+    a === "another-cup" ? <GlassIcon /> : a === "another-bottle" ? <BottleIcon /> : a === "accompaniment" ? <PlateIcon /> : <BillIcon />;
+
+  return (
+    <nav className="tbar" aria-label={t("tableActions.navAria")}>
+      <div className="tbar-inner">
+        {/* Microconfirmación de intención: nunca afirma envío/recepción */}
+        <p className="tbar-status" aria-live="polite">
+          {activeAction ? t("tableActions.selected", { action: labelOf(activeAction) }) : "\u00A0"}
+        </p>
+        <div className="tbar-row">
+          {ACTIONS.map((a) => {
+            const active = activeAction === a;
+            return (
+              <button
+                key={a}
+                type="button"
+                className={`tbar-btn${active ? " is-active" : ""}`}
+                aria-pressed={active}
+                onClick={() => setActiveAction((cur) => nextActiveAction(cur, a))}
+              >
+                {active ? <CheckIcon /> : iconOf(a)}
+                <span className="tbar-btn-label">{labelOf(a)}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </nav>
+  );
+}
