@@ -634,3 +634,80 @@ img {
     transform: scale(1);
   }
 }
+
+/* =============================================
+   FASE 5C — CTA "Agregar/Quitar de mi selección"
+   dentro de WineSheet (lenguaje visual existente)
+   ============================================= */
+.ws-sel-btn {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: var(--navy);
+  border: 1px solid var(--navy-soft);
+  color: var(--paper-warm);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ws-sel-btn .ws-sel-btn-ico {
+  flex: 0 0 auto;
+}
+
+.ws-sel-btn-label {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ws-sel-btn:hover:not(:disabled) {
+  background: var(--navy-soft);
+}
+
+.ws-sel-btn:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+
+.ws-sel-btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.ws-sel-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Seleccionado: tratamiento secundario editorial (no solo color:
+   icono relleno + texto "Quitar" + borde dorado + fondo papel oscuro) */
+.ws-sel-btn.is-selected {
+  background: var(--paper-dark);
+  border-color: var(--gold);
+  color: var(--navy);
+}
+
+.ws-sel-btn.is-selected:hover:not(:disabled) {
+  background: var(--paper);
+}
+
+@media (max-width: 350px) {
+  .ws-sel-btn {
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ws-sel-btn {
+    transition: background-color 150ms ease-out, color 150ms ease-out,
+      border-color 150ms ease-out, transform 120ms ease-out;
+  }
+}

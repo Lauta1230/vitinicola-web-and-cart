@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Wine } from "../data/catalog";
 import { formatPrice } from "../utils/formatPrice";
 import { business } from "../data/business";
 import { useLocale } from "../context/LocaleContext";
+import { useSelection, normalizeWineId } from "../context/SelectionContext";
 import { useTranslation } from "../hooks/useTranslation";
 
 type Props = {
@@ -15,6 +16,29 @@ export function WineSheet({ wine, onClose }: Props) {
   const scrollYRef = useRef<number>(0);
   const { currency, rateType } = useLocale();
   const { t } = useTranslation();
+
+  // FASE 5C — Mi selección: la única fuente de verdad es SelectionContext
+  // (sin useState paralelo de selección). Solo hay feedback temporal local.
+  const { isSelected, toggle } = useSelection();
+  const [selFeedback, setSelFeedback] = useState<"added" | "removed" | null>(null);
+  const selFeedbackTimer = useRef<number | null>(null);
+
+  // Al cambiar de ficha: reset del feedback (sin mover foco ni scroll).
+  useEffect(() => {
+    setSelFeedback(null);
+    if (selFeedbackTimer.current !== null) {
+      window.clearTimeout(selFeedbackTimer.current);
+      selFeedbackTimer.current = null;
+    }
+  }, [wine?.id]);
+
+  // Limpieza del timer si el sheet se desmonta a mitad del feedback.
+  useEffect(
+    () => () => {
+      if (selFeedbackTimer.current !== null) window.clearTimeout(selFeedbackTimer.current);
+    },
+    []
+  );
 
   useEffect(() => {
     if (!wine) return;
@@ -53,6 +77,25 @@ export function WineSheet({ wine, onClose }: Props) {
   if (!wine) return null;
 
   const priceLabel = formatPrice(wine.precio, currency, rateType);
+
+  // FASE 5C — toggle real contra el contexto compartido.
+  // La deduplicación y la validación de ID ya viven en el reducer de 5B
+  // (idempotente, IDs desconocidos = no-op); sin lógica paralela acá.
+  // Si el vino llega sin ID válido: botón deshabilitado, sin estado inconsistente.
+  const selectable = normalizeWineId(wine.id) !== null;
+  const inSelection = selectable && isSelected(wine.id);
+
+  const handleToggleSelection = () => {
+    if (!selectable) return;
+    toggle(wine.id);
+    setSelFeedback(!inSelection ? "added" : "removed");
+    if (selFeedbackTimer.current !== null) window.clearTimeout(selFeedbackTimer.current);
+    selFeedbackTimer.current = window.setTimeout(() => {
+      selFeedbackTimer.current = null;
+      setSelFeedback(null);
+    }, 1500);
+  };
+
   const shareText = encodeURIComponent(
     `Te recomiendo de ${business.name}: ${wine.nombre_completo_visible} — ${wine.bodega} — ${priceLabel} — ${business.maps}`
   );
@@ -274,6 +317,38 @@ export function WineSheet({ wine, onClose }: Props) {
           </div>
 
           <div style={{ display: "grid", gap: 10 }}>
+            <button
+              type="button"
+              className={`ws-sel-btn${inSelection ? " is-selected" : ""}`}
+              onClick={handleToggleSelection}
+              aria-pressed={inSelection}
+              disabled={!selectable}
+              aria-label={
+                inSelection
+                  ? t("selection.removeAria", {
+                      nombre: wine.nombre_completo_visible,
+                      nome: wine.nombre_completo_visible,
+                      name: wine.nombre_completo_visible,
+                    })
+                  : t("selection.addAria", {
+                      nombre: wine.nombre_completo_visible,
+                      nome: wine.nombre_completo_visible,
+                      name: wine.nombre_completo_visible,
+                    })
+              }
+            >
+              <SelectionBookmarkIcon filled={inSelection} />
+              <span className="ws-sel-btn-label" aria-live="polite">
+                {selFeedback === "added"
+                  ? `✓ ${t("selection.added")}`
+                  : selFeedback === "removed"
+                    ? t("selection.removed")
+                    : inSelection
+                      ? t("selection.removeCta")
+                      : t("selection.add")}
+              </span>
+            </button>
+
             <a
               href={waHref}
               target="_blank"
@@ -348,5 +423,28 @@ export function WineSheet({ wine, onClose }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * FASE 5C — Marcador del CTA: contorno (no seleccionado) / relleno (seleccionado).
+ * Diferencia de estado no dependiente solo del color: figura + texto + aria-pressed.
+ */
+function SelectionBookmarkIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className="ws-sel-btn-ico"
+    >
+      <path d="M19 21 12 16.5 5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z" />
+    </svg>
   );
 }
