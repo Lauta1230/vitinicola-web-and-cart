@@ -7,7 +7,7 @@ import { QuickFilters } from "./components/QuickFilters";
 import { PriceOccasionFilters } from "./components/PriceOccasionFilters";
 import { Catalog } from "./components/Catalog";
 import { Footer } from "./components/Footer";
-import { LazySelectionSheet, LazyWineSheet } from "./components/lazySheets";
+import { LazyGiftExplorer, LazySelectionSheet, LazyWineSheet } from "./components/lazySheets";
 import { ServiceModeSwitch } from "./components/ServiceModeSwitch";
 import { TableActionBar } from "./components/TableActionBar";
 import { SelectionTrigger } from "./components/SelectionTrigger";
@@ -36,6 +36,9 @@ function AppInner() {
   // FASE 5.5 — solo isOpen: el toggle de selección re-renderiza AppInner, pero
   // Catalog (memo) y su listado de 659 cards quedan fuera del render.
   const { isOpen: selectionOpen } = useSelection();
+  // FASE 6 — Gift Explorer: disponible solo en "Llevar / Regalar" (capa
+  // secundaria; no compite con la experiencia de mesa). Estado local del sheet.
+  const [giftOpen, setGiftOpen] = useState(false);
   const { t } = useTranslation();
 
   const catalogAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -130,6 +133,24 @@ function AppInner() {
             occasion={occasion}
             onOccasionChange={setOccasion}
           />
+
+          {serviceMode === "takeaway" && (
+            <button
+              type="button"
+              className="gift-trigger"
+              aria-haspopup="dialog"
+              onClick={() => setGiftOpen(true)}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <rect x="4" y="10" width="16" height="10" rx="1.5" />
+                <path d="M12 10v10" />
+                <path d="M4 10h16" />
+                <path d="M12 10c-4.5 0-6-1.8-6-3.4C6 5.1 7.2 4 8.6 4 10.6 4 12 6.4 12 10Z" />
+                <path d="M12 10c4.5 0 6-1.8 6-3.4C18 5.1 16.8 4 15.4 4 13.4 4 12 6.4 12 10Z" />
+              </svg>
+              {t("gifts.explore")}
+            </button>
+          )}
 
           <WineryExplorer totalBodegas={bodegaList.length} activeBodega={bodega} onSelect={setBodega} />
 
@@ -271,6 +292,11 @@ function AppInner() {
       {selectionOpen && (
         <Suspense fallback={<SheetShellFallback />}>
           <LazySelectionSheet onExplore={handleExplore} />
+        </Suspense>
+      )}
+      {serviceMode === "takeaway" && giftOpen && (
+        <Suspense fallback={<SheetShellFallback />}>
+          <LazyGiftExplorer onClose={() => setGiftOpen(false)} onOpenWine={setSelected} />
         </Suspense>
       )}
     </div>

@@ -23,6 +23,10 @@ export const LazySelectionSheet = lazy(() =>
   import("./SelectionSheet").then((m) => ({ default: m.SelectionSheet }))
 );
 
+export const LazyGiftExplorer = lazy(() =>
+  import("./GiftExplorer").then((m) => ({ default: m.GiftExplorer }))
+);
+
 export function preloadWineSheet(): void {
   void import("./WineSheet");
 }

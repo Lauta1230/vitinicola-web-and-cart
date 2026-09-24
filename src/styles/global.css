@@ -181,6 +181,242 @@ img {
 }
 
 /* =============================================
+   FASE 6 — Gift Explorer (capa secundaria "Regalos")
+   Reutiliza sel-overlay/sel-sheet/handle/header/close/empty.
+   ============================================= */
+.gift-overlay {
+  z-index: var(--z-gift);
+}
+
+/* Trigger discreto: acción secundaria, no CTA principal */
+.gift-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 14px;
+  align-self: start;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-strong);
+  background: var(--paper-warm);
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gift-trigger:hover {
+  background: var(--white);
+  border-color: var(--gold);
+}
+
+.gift-trigger:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.gift-trigger:active {
+  transform: translateY(0.5px);
+}
+
+.gift-filters {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
+}
+
+.gift-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  font-weight: 800;
+  color: var(--gold-muted);
+  margin-bottom: 6px;
+}
+
+.gift-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+
+.gift-chip {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 13px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  background: var(--white);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gift-chip:hover {
+  border-color: var(--navy-soft);
+  color: var(--navy);
+}
+
+.gift-chip:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Seleccionado: no solo color (fondo navy + peso) */
+.gift-chip[aria-pressed="true"] {
+  background: var(--navy);
+  border-color: var(--navy-soft);
+  color: var(--paper-warm);
+  font-weight: 800;
+}
+
+.gift-results-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 16px 2px;
+}
+
+.gift-results-head .gift-label {
+  margin-bottom: 0;
+}
+
+.gift-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 16px 16px;
+  display: grid;
+  gap: 8px;
+  overflow: auto;
+  flex: 1 1 auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gift-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 6px 6px 6px 12px;
+}
+
+/* Botón de apertura: ocupa la info completa de la fila */
+.gift-open {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 8px 0;
+  cursor: pointer;
+  border-radius: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gift-open:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.gift-add {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--navy);
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gift-add:hover {
+  border-color: var(--navy-soft);
+}
+
+.gift-add:active {
+  transform: translateY(0.5px);
+}
+
+.gift-add:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Agregado: icono relleno + texto cambiado + borde dorado (no solo color) */
+.gift-add[aria-pressed="true"] {
+  background: var(--navy);
+  border-color: var(--gold);
+  color: var(--paper-warm);
+  font-weight: 800;
+}
+
+.gift-more {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 2px;
+}
+
+.gift-more-btn {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  background: transparent;
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 10px;
+  text-decoration: underline dotted rgba(15, 46, 64, 0.35);
+  text-underline-offset: 3px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gift-more-btn:hover {
+  color: var(--gold-muted);
+}
+
+.gift-more-btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.gift-selcount {
+  margin: 5px 0 0;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--gold-muted);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gift-trigger,
+  .gift-chip,
+  .gift-add {
+    transition: background-color 150ms ease-out, color 150ms ease-out,
+      border-color 150ms ease-out, transform 120ms ease-out;
+  }
+}
+
+/* =============================================
    FASE 5A — Contexto de servicio (Wine Bar)
    ServiceModeSwitch: segmented control editorial
    ============================================= */
