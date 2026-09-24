@@ -9,28 +9,24 @@ import { Footer } from "./components/Footer";
 import { allWines, bodegaList } from "./data/catalog";
 import { filterWines } from "./utils/search";
 import type { Wine } from "./data/catalog";
+import { useTranslation } from "./hooks/useTranslation";
 import "./styles/global.css";
 
-export default function App() {
+function AppInner() {
   const [query, setQuery] = useState("");
   const [bodega, setBodega] = useState<string | null>(null);
   const [selected, setSelected] = useState<Wine | null>(null);
+  const { t } = useTranslation();
 
   const catalogAnchorRef = useRef<HTMLDivElement | null>(null);
 
   const filtered = useMemo(() => filterWines(allWines, query, bodega), [query, bodega]);
 
   const handleExplore = () => {
-    // AUDITORÍA SCROLL: antes usaba offset arbitrario -72 y el catálogo quedaba oculto
-    // bajo el header sticky + la barra de controles sticky (que ocupaba ~150px).
-    // FIX: medir altura real del header y hacer scroll al ancla #catalogo, no al interior del catálogo.
-    // El ancla tiene scroll-margin-top: calc(var(--header-h) + 12px) para que el navegador lo respete,
-    // pero aquí usamos window.scrollTo + medición precisa para CTA.
     const anchor = catalogAnchorRef.current;
     if (!anchor) return;
     const header = document.querySelector("header") as HTMLElement | null;
     const headerH = header ? header.getBoundingClientRect().height : 52;
-    // Pequeño respiro para que el inicio de la carta no quede pegado al header
     const padding = 12;
     const top = anchor.getBoundingClientRect().top + window.scrollY - headerH - padding;
     window.scrollTo({ top, behavior: "smooth" });
@@ -41,20 +37,13 @@ export default function App() {
       <Header />
       <Hero totalWines={allWines.length} totalBodegas={bodegaList.length} onExplore={handleExplore} />
 
-      {/* Ancla real del catálogo: justo antes de los controles.
-          Importante: el Header es el único sticky. Los controles ya NO son sticky,
-          así evitamos doble capa sticky que tapaba media pantalla en mobile. */}
       <div id="catalogo" ref={catalogAnchorRef} aria-label="Inicio del catálogo" />
 
       <main className="container" style={{ width: "100%", paddingTop: 16, paddingBottom: 0, flex: "1 1 auto" }}>
-        {/* Controles: ahora NO sticky — scroll natural. 
-            Esto elimina el bug donde el Hero/Header/controles tapaban el inicio de la carta. */}
         <div
           style={{
             display: "grid",
             gap: 12,
-            // Antes: position: sticky, top: var(--header-h), zIndex: 20, márgenes negativos
-            // Ahora: flujo normal, sin sticky, sin z-index elevado
             position: "relative",
             zIndex: 1,
             paddingTop: 4,
@@ -94,7 +83,9 @@ export default function App() {
                   display: "inline-block",
                 }}
               />
-              {bodega ? `Bodega: ${bodega} · ${filtered.length} vinos` : `Carta · ${filtered.length} vinos · ${bodegaList.length} bodegas`}
+              {bodega
+                ? t("catalog.bodegaCount", { bodega, count: filtered.length })
+                : t("catalog.filteredCount", { filtered: filtered.length, total: bodegaList.length })}
             </span>
             {(query || bodega) && (
               <button
@@ -114,18 +105,16 @@ export default function App() {
                   cursor: "pointer",
                 }}
               >
-                Limpiar filtros
+                {t("catalog.clearFilters")}
               </button>
             )}
           </div>
         </div>
 
-        {/* Catálogo en sí */}
         <div style={{ paddingTop: 12, paddingBottom: 16 }}>
           <Catalog wines={filtered} query={query} bodega={bodega} onOpen={setSelected} />
         </div>
 
-        {/* Nota de integridad */}
         <div
           style={{
             marginTop: 8,
@@ -155,11 +144,11 @@ export default function App() {
             ✓
           </span>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: "var(--navy)", lineHeight: 1.3 }}>Carta digital · 659 etiquetas · 113 bodegas</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "var(--navy)", lineHeight: 1.3 }}>{t("catalog.integrityTitle")}</div>
             <div style={{ fontSize: 12, color: "var(--ink-muted)", marginTop: 4, lineHeight: 1.5 }}>
-              Explorá la carta como en la vinoteca. Los 2 registros DUDOSO (VIN-053 y VIN-145) permanecen fuera de la carta hasta confirmación.
+              {t("catalog.integrityDesc")}
               <br />
-              <span style={{ fontSize: 11, letterSpacing: "0.04em" }}>Fuente: <code>data/inventario-carta.json</code> · Octubre · ARS</span>
+              <span style={{ fontSize: 11, letterSpacing: "0.04em" }}>{t("catalog.integritySource")}</span>
             </div>
           </div>
         </div>
@@ -169,5 +158,15 @@ export default function App() {
 
       <WineSheet wine={selected} onClose={() => setSelected(null)} />
     </div>
+  );
+}
+
+import { LocaleProvider } from "./context/LocaleContext";
+
+export default function App() {
+  return (
+    <LocaleProvider>
+      <AppInner />
+    </LocaleProvider>
   );
 }

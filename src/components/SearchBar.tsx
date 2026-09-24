@@ -1,3 +1,5 @@
+import { useTranslation } from "../hooks/useTranslation";
+
 type Props = {
   value: string;
   onChange: (v: string) => void;
@@ -8,6 +10,7 @@ type Props = {
 };
 
 export function SearchBar({ value, onChange, total, filteredCount, bodegaActiva, onClearBodega }: Props) {
+  const { t } = useTranslation();
   const hasQuery = value.trim().length > 0;
   const showingFiltered = filteredCount !== total || bodegaActiva;
 
@@ -22,7 +25,7 @@ export function SearchBar({ value, onChange, total, filteredCount, bodegaActiva,
       }}
     >
       <label htmlFor="search-vinos" style={{ position: "absolute", left: -9999, top: -9999 }}>
-        Buscar vinos
+        {t("search.placeholder")}
       </label>
       <div style={{ position: "relative" }}>
         <span
@@ -47,7 +50,7 @@ export function SearchBar({ value, onChange, total, filteredCount, bodegaActiva,
           id="search-vinos"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Buscar vino o bodega… Ej: Quimera, Catena, Malbec"
+          placeholder={t("search.placeholder")}
           autoComplete="off"
           spellCheck={false}
           style={{
@@ -66,7 +69,7 @@ export function SearchBar({ value, onChange, total, filteredCount, bodegaActiva,
         {value && (
           <button
             onClick={() => onChange("")}
-            aria-label="Limpiar búsqueda"
+            aria-label={t("search.clear")}
             style={{
               position: "absolute",
               right: 6,
@@ -88,7 +91,6 @@ export function SearchBar({ value, onChange, total, filteredCount, bodegaActiva,
         )}
       </div>
 
-      {/* Meta */}
       <div
         style={{
           marginTop: 10,
@@ -130,9 +132,11 @@ export function SearchBar({ value, onChange, total, filteredCount, bodegaActiva,
                 background: showingFiltered ? "var(--gold)" : "var(--ink-muted)",
               }}
             />
-            {filteredCount} de {total}
+            {t("search.count", { filtered: filteredCount, total })}
           </span>
-          <span style={{ opacity: 0.6 }}>{hasQuery ? `para "${value}"` : bodegaActiva ? `en ${bodegaActiva}` : "etiquetas"}</span>
+          <span style={{ opacity: 0.6 }}>
+            {hasQuery ? t("search.countWithQuery", { query: value }) : bodegaActiva ? t("search.countWithBodega", { bodega: bodegaActiva }) : t("search.all")}
+          </span>
         </div>
 
         {bodegaActiva && (
@@ -157,8 +161,7 @@ export function SearchBar({ value, onChange, total, filteredCount, bodegaActiva,
 
       {hasQuery && (
         <div style={{ marginTop: 8, fontSize: 11, color: "var(--ink-muted)", letterSpacing: "0.04em" }}>
-          Tip: probá <strong style={{ color: "var(--ink-soft)" }}>"Quimera"</strong> → encuentra{" "}
-          <em style={{ color: "var(--ink-soft)" }}>Achaval Ferrer Quimera Blend Blanco</em>
+          {t("search.tip")} <em style={{ color: "var(--ink-soft)" }}>{t("search.tipExample")}</em>
         </div>
       )}
     </div>

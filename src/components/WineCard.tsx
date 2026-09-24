@@ -1,16 +1,19 @@
 import type { Wine } from "../data/catalog";
-import { formatARS } from "../utils/formatPrice";
+import { formatPrice } from "../utils/formatPrice";
+import { useLocale } from "../context/LocaleContext";
+import { useTranslation } from "../hooks/useTranslation";
 
 type Props = {
   wine: Wine;
   onOpen: (wine: Wine) => void;
-  // Cuando se muestra agrupado por bodega, la bodega ya está en el encabezado de sección:
-  // no repetir badge para reforzar la jerarquía de carta.
   showBodega?: boolean;
 };
 
 export function WineCard({ wine, onOpen, showBodega = true }: Props) {
+  const { currency, rateType } = useLocale();
+  const { t } = useTranslation();
   const hasAnada = wine.anada != null && String(wine.anada).trim() !== "";
+  const priceLabel = formatPrice(wine.precio, currency, rateType);
 
   return (
     <article
@@ -23,7 +26,7 @@ export function WineCard({ wine, onOpen, showBodega = true }: Props) {
           onOpen(wine);
         }
       }}
-      aria-label={`${wine.nombre_completo_visible}, ${wine.bodega} — ${formatARS(wine.precio)}`}
+      aria-label={`${wine.nombre_completo_visible}, ${wine.bodega} — ${priceLabel}`}
       style={{
         background: "var(--paper-warm)",
         border: "1px solid var(--line)",
@@ -51,7 +54,6 @@ export function WineCard({ wine, onOpen, showBodega = true }: Props) {
         el.style.borderColor = "var(--line)";
       }}
     >
-      {/* Izquierda: nombre + bodega sutil */}
       <div style={{ minWidth: 0, flex: "1 1 auto" }}>
         {showBodega && (
           <div
@@ -82,7 +84,7 @@ export function WineCard({ wine, onOpen, showBodega = true }: Props) {
               marginBottom: 4,
             }}
           >
-            AÑADA {String(wine.anada)}
+            {t("wine.vintage")} {String(wine.anada)}
           </div>
         )}
         <h3
@@ -93,7 +95,6 @@ export function WineCard({ wine, onOpen, showBodega = true }: Props) {
             lineHeight: 1.32,
             fontWeight: 650,
             color: "var(--ink)",
-            // En carta, el nombre debe leerse completo sin truncar agresivo
             display: "-webkit-box",
             WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
@@ -104,12 +105,11 @@ export function WineCard({ wine, onOpen, showBodega = true }: Props) {
         </h3>
         {!showBodega && (
           <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2, lineHeight: 1, letterSpacing: "0.02em" }}>
-            pág. {wine.pagina_carta}
+            {t("wine.page")} {wine.pagina_carta}
           </div>
         )}
       </div>
 
-      {/* Derecha: precio + flecha */}
       <div
         style={{
           flex: "0 0 auto",
@@ -130,7 +130,7 @@ export function WineCard({ wine, onOpen, showBodega = true }: Props) {
             textAlign: "right",
           }}
         >
-          {formatARS(wine.precio)}
+          {priceLabel}
         </span>
         <span
           aria-hidden

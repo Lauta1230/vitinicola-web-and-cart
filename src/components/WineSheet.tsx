@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
 import type { Wine } from "../data/catalog";
-import { formatARS } from "../utils/formatPrice";
+import { formatPrice } from "../utils/formatPrice";
 import { business } from "../data/business";
+import { useLocale } from "../context/LocaleContext";
+import { useTranslation } from "../hooks/useTranslation";
 
 type Props = {
   wine: Wine | null;
@@ -11,11 +13,12 @@ type Props = {
 export function WineSheet({ wine, onClose }: Props) {
   const sheetRef = useRef<HTMLDivElement | null>(null);
   const scrollYRef = useRef<number>(0);
+  const { currency, rateType } = useLocale();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!wine) return;
 
-    // Preservar posición de scroll para restaurar sin salto al cerrar
     scrollYRef.current = window.scrollY;
 
     const onKey = (e: KeyboardEvent) => {
@@ -23,20 +26,13 @@ export function WineSheet({ wine, onClose }: Props) {
     };
     window.addEventListener("keydown", onKey);
 
-    // Bloquear scroll del body sin provocar salto: fijar posición
     const prevOverflow = document.body.style.overflow;
     const prevPosition = document.body.style.position;
     const prevTop = document.body.style.top;
     const prevWidth = document.body.style.width;
 
     document.body.style.overflow = "hidden";
-    // Evitar layout shift por scrollbar: mantener ancho
-    // No usamos position: fixed aquí porque puede causar salto en iOS si no se compensa scrollY.
-    // En su lugar, solo overflow hidden es suficiente si el sheet es position: fixed y cubre viewport.
-    // Pero para asegurar que no haya scroll de fondo en iOS, añadimos touch-action none al backdrop.
-    // Guardamos scrollY para restaurar si el navegador hace scroll al enfocar.
 
-    // Intentar enfocar el sheet sin hacer scroll
     requestAnimationFrame(() => {
       sheetRef.current?.focus({ preventScroll: true } as unknown as FocusOptions);
     });
@@ -47,10 +43,7 @@ export function WineSheet({ wine, onClose }: Props) {
       document.body.style.position = prevPosition;
       document.body.style.top = prevTop;
       document.body.style.width = prevWidth;
-      // Restaurar posición exacta sin salto (el sheet ya está desmontado, no hay scrollIntoView)
-      // Usamos scrollTo con comportamiento instantáneo para no animar
       const y = scrollYRef.current;
-      // Solo restaurar si la posición cambió (evitar scroll innecesario)
       if (Math.abs(window.scrollY - y) > 2) {
         window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior });
       }
@@ -59,8 +52,9 @@ export function WineSheet({ wine, onClose }: Props) {
 
   if (!wine) return null;
 
+  const priceLabel = formatPrice(wine.precio, currency, rateType);
   const shareText = encodeURIComponent(
-    `Te recomiendo de ${business.name}: ${wine.nombre_completo_visible} — ${wine.bodega} — ${formatARS(wine.precio)} — ${business.maps}`
+    `Te recomiendo de ${business.name}: ${wine.nombre_completo_visible} — ${wine.bodega} — ${priceLabel} — ${business.maps}`
   );
   const waHref = `https://wa.me/?text=${shareText}`;
 
@@ -80,7 +74,6 @@ export function WineSheet({ wine, onClose }: Props) {
         alignItems: "flex-end",
         justifyContent: "center",
         padding: 12,
-        // Evitar que el fondo haga scroll en iOS
         touchAction: "none",
       }}
     >
@@ -103,12 +96,10 @@ export function WineSheet({ wine, onClose }: Props) {
           touchAction: "auto",
         }}
       >
-        {/* Handle */}
         <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 0" }}>
           <span style={{ width: 36, height: 4, borderRadius: 999, background: "var(--line-strong)", display: "block" }} />
         </div>
 
-        {/* Header */}
         <div style={{ padding: "12px 16px 12px", borderBottom: "1px solid var(--line)", background: "var(--paper-warm)" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
             <div style={{ minWidth: 0 }}>
@@ -153,8 +144,8 @@ export function WineSheet({ wine, onClose }: Props) {
                     fontSize: 13,
                   }}
                 >
-                  {formatARS(wine.precio)}
-                  <span style={{ opacity: 0.7, fontWeight: 600, fontSize: 11 }}>ARS</span>
+                  {priceLabel}
+                  <span style={{ opacity: 0.7, fontWeight: 600, fontSize: 11 }}>{currency}</span>
                 </span>
                 <span
                   style={{
@@ -164,14 +155,19 @@ export function WineSheet({ wine, onClose }: Props) {
                     fontWeight: 600,
                   }}
                 >
-                  CARTA OCTUBRE · pág. {wine.pagina_carta}
+                  {t("wine.page").toUpperCase()} · {t("common.pagina")} {wine.pagina_carta}
                 </span>
               </div>
+              {currency !== "ARS" && (
+                <div style={{ marginTop: 6, fontSize: 11, color: "var(--ink-muted)" }}>
+                  {formatPrice(wine.precio, "ARS", "official")} ARS · {t("settings.rate")}: {rateType === "official" ? t("settings.rateOfficial") : t("settings.rateBlue")}
+                </div>
+              )}
             </div>
 
             <button
               onClick={onClose}
-              aria-label="Cerrar"
+              aria-label={t("wine.close")}
               style={{
                 flex: "0 0 auto",
                 width: 36,
@@ -190,7 +186,6 @@ export function WineSheet({ wine, onClose }: Props) {
           </div>
         </div>
 
-        {/* Body */}
         <div style={{ overflow: "auto", padding: 16, display: "grid", gap: 14, WebkitOverflowScrolling: "touch" }}>
           <div
             style={{
@@ -202,25 +197,25 @@ export function WineSheet({ wine, onClose }: Props) {
               gap: 10,
             }}
           >
-            <div style={{ fontSize: 11, letterSpacing: "0.10em", fontWeight: 800, color: "var(--ink-muted)" }}>DETALLE DE CARTA</div>
+            <div style={{ fontSize: 11, letterSpacing: "0.10em", fontWeight: 800, color: "var(--ink-muted)" }}>{t("wine.detailTitle")}</div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <div>
-                <div style={{ fontSize: 11, color: "var(--ink-muted)", letterSpacing: "0.06em", fontWeight: 700 }}>BODEGA</div>
+                <div style={{ fontSize: 11, color: "var(--ink-muted)", letterSpacing: "0.06em", fontWeight: 700 }}>{t("wine.bodega")}</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>{wine.bodega}</div>
               </div>
               <div>
-                <div style={{ fontSize: 11, color: "var(--ink-muted)", letterSpacing: "0.06em", fontWeight: 700 }}>CATEGORÍA</div>
+                <div style={{ fontSize: 11, color: "var(--ink-muted)", letterSpacing: "0.06em", fontWeight: 700 }}>{t("wine.categoria")}</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>{wine.categoria_carta}</div>
               </div>
               {wine.anada && (
                 <div>
-                  <div style={{ fontSize: 11, color: "var(--ink-muted)", letterSpacing: "0.06em", fontWeight: 700 }}>AÑADA</div>
+                  <div style={{ fontSize: 11, color: "var(--ink-muted)", letterSpacing: "0.06em", fontWeight: 700 }}>{t("wine.vintage")}</div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>{String(wine.anada)}</div>
                 </div>
               )}
               <div>
-                <div style={{ fontSize: 11, color: "var(--ink-muted)", letterSpacing: "0.06em", fontWeight: 700 }}>PÁGINA CARTA</div>
+                <div style={{ fontSize: 11, color: "var(--ink-muted)", letterSpacing: "0.06em", fontWeight: 700 }}>{t("wine.page")} CARTA</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>{wine.pagina_carta}</div>
               </div>
             </div>
@@ -237,25 +232,25 @@ export function WineSheet({ wine, onClose }: Props) {
                 lineHeight: 1.5,
               }}
             >
-              <strong style={{ color: "var(--navy)" }}>Fuente de verdad:</strong> Carta de La Vinícola (Octubre). Precio y nombre exactamente como aparecen en la carta. Sin descripciones ni puntajes añadidos en esta fase.
+              <strong style={{ color: "var(--navy)" }}>{t("wine.sourceTitle")}</strong> {t("wine.sourceDesc")}
               {wine.notas_validacion && (
                 <>
                   <br />
-                  <span style={{ color: "var(--ink-muted)" }}>Nota:</span> {wine.notas_validacion}
+                  <span style={{ color: "var(--ink-muted)" }}>{t("wine.note")}</span> {wine.notas_validacion}
                 </>
               )}
             </div>
           </div>
 
           <div style={{ display: "grid", gap: 8, opacity: 0.92 }}>
-            <div style={{ fontSize: 11, letterSpacing: "0.10em", fontWeight: 800, color: "var(--ink-muted)" }}>PRÓXIMAMENTE</div>
+            <div style={{ fontSize: 11, letterSpacing: "0.10em", fontWeight: 800, color: "var(--ink-muted)" }}>{t("wine.soon")}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {[
-                { label: "Cepa", soon: true },
-                { label: "Estilo", soon: true },
-                { label: "Maridaje", soon: true },
-                { label: "Ocasión", soon: true },
-                { label: "Pack", soon: true },
+                { label: t("wine.cepa"), soon: true },
+                { label: t("wine.estilo"), soon: true },
+                { label: t("wine.maridaje"), soon: true },
+                { label: t("wine.ocasion"), soon: true },
+                { label: t("wine.pack"), soon: true },
               ].map((chip) => (
                 <span
                   key={chip.label}
@@ -272,7 +267,7 @@ export function WineSheet({ wine, onClose }: Props) {
                     fontWeight: 700,
                   }}
                 >
-                  {chip.label} <span style={{ fontSize: 10, opacity: 0.7 }}>PRONTO</span>
+                  {chip.label} <span style={{ fontSize: 10, opacity: 0.7 }}>{t("wine.soonBadge")}</span>
                 </span>
               ))}
             </div>
@@ -298,7 +293,7 @@ export function WineSheet({ wine, onClose }: Props) {
                 textDecoration: "none",
               }}
             >
-              <span aria-hidden>💬</span> Compartir por WhatsApp
+              <span aria-hidden>💬</span> {t("wine.shareWA")}
             </a>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -321,7 +316,7 @@ export function WineSheet({ wine, onClose }: Props) {
                   textDecoration: "none",
                 }}
               >
-                📍 Cómo llegar
+                📍 {t("wine.howToArrive")}
               </a>
               <a
                 href={business.instagram}
@@ -348,7 +343,7 @@ export function WineSheet({ wine, onClose }: Props) {
           </div>
 
           <div style={{ fontSize: 11, color: "var(--ink-muted)", textAlign: "center", lineHeight: 1.4 }}>
-            ID {wine.id} · Carta pág. {wine.pagina_carta} · Precio ARS · Stock consultar en tienda
+            {t("wine.stock", { id: wine.id, page: wine.pagina_carta, currency })}
           </div>
         </div>
       </div>

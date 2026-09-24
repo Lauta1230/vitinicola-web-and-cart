@@ -1,6 +1,12 @@
 import { business } from "../data/business";
+import { useTranslation } from "../hooks/useTranslation";
+import { useLocale } from "../context/LocaleContext";
 
 export function Footer() {
+  const { t } = useTranslation();
+  const { currency } = useLocale();
+  const year = new Date().getFullYear();
+
   return (
     <footer
       style={{
@@ -47,9 +53,9 @@ export function Footer() {
               {business.name}
             </div>
             <div style={{ marginTop: 8, fontSize: 13, color: "rgba(255,253,248,0.72)", lineHeight: 1.5 }}>
-              {business.address} · {business.hours}
+              {t("footer.address")} · {t("footer.hours")}
               <br />
-              Vinoteca premium · +1100 etiquetas · Degustaciones en terraza
+              {t("footer.description")}
             </div>
           </div>
 
@@ -72,7 +78,7 @@ export function Footer() {
                 border: "1px solid var(--line)",
               }}
             >
-              📍 Ver en Google Maps
+              📍 {t("footer.viewMaps")}
             </a>
             <a
               href={business.instagram}
@@ -109,8 +115,10 @@ export function Footer() {
               letterSpacing: "0.06em",
             }}
           >
-            <span>© {new Date().getFullYear()} La Vinícola Mendoza · Demo Maestra BlackXProyect</span>
-            <span>Carta Octubre · Precios ARS · Fuente de verdad: inventario-carta.json</span>
+            <span>{t("footer.rights", { year })}</span>
+            <span>
+              {t("footer.source")} {currency !== "ARS" ? ` · ${currency} · ${t("settings.referenceNote")}` : ""}
+            </span>
           </div>
         </div>
       </div>

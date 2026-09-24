@@ -1,4 +1,5 @@
 import { business } from "../data/business";
+import { LocaleSettingsSheet } from "./LocaleSettingsSheet";
 
 export function Header() {
   return (
@@ -19,7 +20,7 @@ export function Header() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 12,
+          gap: 8,
         }}
       >
         <a
@@ -28,8 +29,9 @@ export function Header() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 10,
+            gap: 8,
             minWidth: 0,
+            flex: "0 1 auto",
           }}
         >
           <span
@@ -50,7 +52,7 @@ export function Header() {
           >
             V
           </span>
-          <span style={{ minWidth: 0 }}>
+          <span style={{ minWidth: 0 }} className="hide-logo-text">
             <span
               style={{
                 display: "block",
@@ -79,7 +81,8 @@ export function Header() {
           </span>
         </a>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "0 0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flex: "0 0 auto" }}>
+          <LocaleSettingsSheet />
           <a
             href={business.maps}
             target="_blank"
@@ -88,9 +91,9 @@ export function Header() {
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 6,
+              gap: 4,
               height: 32,
-              padding: "0 10px",
+              padding: "0 8px",
               borderRadius: 999,
               border: "1px solid var(--line-strong)",
               background: "var(--white)",
@@ -118,6 +121,7 @@ export function Header() {
               background: "var(--navy)",
               color: "var(--gold-light)",
               border: "1px solid var(--navy-soft)",
+              flex: "0 0 auto",
             }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -130,6 +134,9 @@ export function Header() {
       </div>
 
       <style>{`
+        @media (max-width: 380px) {
+          .hide-logo-text { display: none !important; }
+        }
         @media (max-width: 640px) {
           .hide-mobile { display: none !important; }
         }

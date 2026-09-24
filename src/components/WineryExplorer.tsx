@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { bodegaList } from "../data/catalog";
+import { useTranslation } from "../hooks/useTranslation";
 
 type Props = {
   totalBodegas: number;
@@ -8,6 +9,7 @@ type Props = {
 };
 
 export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const sheetRef = useRef<HTMLDivElement | null>(null);
@@ -19,7 +21,6 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
     return bodegaList.filter((b) => b.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q));
   }, [query]);
 
-  // Agrupar por letra inicial para navegación rápida
   const grouped = useMemo(() => {
     const map = new Map<string, typeof filtered>();
     for (const b of filtered) {
@@ -30,7 +31,6 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [filtered]);
 
-  // Cerrar con ESC
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -40,21 +40,17 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // Bloquear scroll del body cuando sheet está abierto (mobile) — sin salto al cerrar
   useEffect(() => {
     if (!open) return;
     const scrollY = window.scrollY;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    // Enfocar sin scroll para no mover el viewport
     requestAnimationFrame(() => {
-      // sheetRef puede contener el input de búsqueda
       const input = sheetRef.current?.querySelector("input") as HTMLElement | null;
       input?.focus({ preventScroll: true } as unknown as FocusOptions);
     });
     return () => {
       document.body.style.overflow = prevOverflow;
-      // Restaurar posición si el navegador la movió al enfocar
       if (Math.abs(window.scrollY - scrollY) > 2) {
         window.scrollTo({ top: scrollY, behavior: "instant" as ScrollBehavior });
       }
@@ -63,7 +59,6 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
 
   return (
     <>
-      {/* Barra de exploración */}
       <div
         style={{
           display: "flex",
@@ -76,7 +71,6 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
           boxShadow: "var(--shadow)",
         }}
       >
-        {/* Botón principal: explorar bodegas */}
         <button
           onClick={() => setOpen(true)}
           style={{
@@ -113,17 +107,16 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
             </span>
             <span style={{ minWidth: 0, textAlign: "left" }}>
               <span style={{ display: "block", fontSize: 13, fontWeight: 800, color: "var(--navy)", lineHeight: 1 }}>
-                {activeBodega ? activeBodega : "Explorar bodegas"}
+                {activeBodega ? activeBodega : t("winery.explore")}
               </span>
               <span style={{ display: "block", fontSize: 11, color: "var(--ink-muted)", lineHeight: 1, marginTop: 2 }}>
-                {activeBodega ? "Tocar para cambiar" : `${totalBodegas} bodegas · orden alfabético`}
+                {activeBodega ? t("winery.exploreActive") : t("winery.subtitle", { total: totalBodegas })}
               </span>
             </span>
           </span>
           <span style={{ color: "var(--ink-muted)", fontSize: 12 }}>▾</span>
         </button>
 
-        {/* Atajo: Todas */}
         <button
           onClick={() => onSelect(null)}
           style={{
@@ -140,11 +133,10 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
             whiteSpace: "nowrap",
           }}
         >
-          Todas
+          {t("winery.all")}
         </button>
       </div>
 
-      {/* Chips de bodegas destacadas (scroll horizontal controlado sin scrollIntoView) */}
       <div style={{ marginTop: 10 }}>
         <div
           style={{
@@ -156,7 +148,7 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
             paddingLeft: 2,
           }}
         >
-          BODEGAS DESTACADAS
+          {t("winery.featured")}
         </div>
         <div
           ref={listRef}
@@ -169,18 +161,12 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
             scrollbarWidth: "thin",
             WebkitOverflowScrolling: "touch",
           }}
-          // Solo controla scrollLeft del contenedor, nunca el viewport vertical
           onWheel={(e) => {
-            // Permite scroll horizontal con shift+wheel de forma natural, sin forzar scroll vertical
             if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
-            // Si el usuario hace wheel vertical sobre este carrusel, lo convertimos sutilmente en horizontal
-            // pero sin tocar window.scrollY
             const el = listRef.current;
             if (!el) return;
             if (e.deltaY !== 0 && el.scrollWidth > el.clientWidth) {
-              // Solo si hay overflow horizontal
               el.scrollLeft += e.deltaY;
-              // Prevenir que el gesto vertical mueva la página cuando estamos sobre el carrusel y aún hay scroll horizontal disponible
               const atStart = el.scrollLeft <= 0 && e.deltaY < 0;
               const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1 && e.deltaY > 0;
               if (!atStart && !atEnd) e.preventDefault();
@@ -199,9 +185,7 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
             "Bemberg",
             "Susana Balbo",
           ]
-            // Mapear a nombres reales que existen; filtrar los que no están en la lista
             .map((name) => {
-              // “Zuccardi” en la carta está como “Familia Zuccardi”, “El Enemigo” como “Enemigo Wines”
               const alias: Record<string, string> = {
                 Zuccardi: "Familia Zuccardi",
                 "El Enemigo": "Enemigo Wines",
@@ -250,17 +234,16 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
               cursor: "pointer",
             }}
           >
-            Ver todas →
+            {t("winery.viewAll")}
           </button>
         </div>
       </div>
 
-      {/* Sheet */}
       {open && (
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Explorar bodegas"
+          aria-label={t("winery.title")}
           onClick={() => setOpen(false)}
           style={{
             position: "fixed",
@@ -290,7 +273,6 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
               overflow: "hidden",
             }}
           >
-            {/* Handle + header */}
             <div style={{ padding: "12px 16px 10px", borderBottom: "1px solid var(--line)", background: "var(--paper-warm)" }}>
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
                 <span style={{ width: 36, height: 4, borderRadius: 999, background: "var(--line-strong)", display: "block" }} />
@@ -298,13 +280,13 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
                 <div>
                   <div style={{ fontFamily: "ui-serif, Georgia, serif", fontWeight: 800, color: "var(--navy)", fontSize: 16, lineHeight: 1 }}>
-                    Explorar bodegas
+                    {t("winery.title")}
                   </div>
-                  <div style={{ fontSize: 12, color: "var(--ink-muted)", marginTop: 2 }}>{totalBodegas} bodegas · {filtered.length} coinciden</div>
+                  <div style={{ fontSize: 12, color: "var(--ink-muted)", marginTop: 2 }}>{t("winery.subtitle", { total: totalBodegas })} · {filtered.length} {t("common.etiquetas")}</div>
                 </div>
                 <button
                   onClick={() => setOpen(false)}
-                  aria-label="Cerrar"
+                  aria-label={t("winery.close")}
                   style={{
                     width: 36,
                     height: 36,
@@ -321,7 +303,6 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
                 </button>
               </div>
 
-              {/* Buscador interno de bodegas */}
               <div style={{ position: "relative", marginTop: 12 }}>
                 <span
                   aria-hidden
@@ -338,7 +319,7 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Filtrar bodegas… Ej: Bianchi, Zuccardi, Bousquet"
+                  placeholder={t("winery.filterPlaceholder")}
                   autoFocus
                   style={{
                     width: "100%",
@@ -353,7 +334,6 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
                 />
               </div>
 
-              {/* Acciones rápidas */}
               <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
                 <button
                   onClick={() => {
@@ -372,7 +352,7 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
                     cursor: "pointer",
                   }}
                 >
-                  Todas las bodegas
+                  {t("winery.allBodegas")}
                 </button>
                 {activeBodega && (
                   <span
@@ -390,16 +370,15 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
                       color: "var(--ink-soft)",
                     }}
                   >
-                    Activa: {activeBodega}
+                    {t("winery.active")} {activeBodega}
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Lista agrupada por letra */}
             <div style={{ overflow: "auto", padding: "8px 8px 16px", WebkitOverflowScrolling: "touch" }}>
               {grouped.length === 0 ? (
-                <div style={{ padding: 24, textAlign: "center", color: "var(--ink-muted)", fontSize: 14 }}>No hay bodegas para “{query}”</div>
+                <div style={{ padding: 24, textAlign: "center", color: "var(--ink-muted)", fontSize: 14 }}>{t("winery.noResults", { query })}</div>
               ) : (
                 grouped.map(([letter, items]) => (
                   <div key={letter} style={{ marginBottom: 14 }}>
@@ -429,7 +408,6 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
                             onClick={() => {
                               onSelect(b.name);
                               setOpen(false);
-                              // No usar scrollIntoView que mueve el viewport vertical. Solo cerrar.
                             }}
                             style={{
                               display: "flex",
@@ -466,7 +444,7 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
                                   marginTop: 2,
                                 }}
                               >
-                                {b.count} etiquetas · pág. {b.pagina}
+                                {t("winery.countEtiquetas", { count: b.count })} · {t("common.pagina")} {b.pagina}
                               </span>
                             </span>
                             <span
@@ -505,9 +483,7 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
                 gap: 10,
               }}
             >
-              <div style={{ fontSize: 11, color: "var(--ink-muted)", lineHeight: 1.4 }}>
-                Tip: combiná bodega + buscador. Ej: <strong>“Bodega: Catena + busca: Malbec”</strong>
-              </div>
+              <div style={{ fontSize: 11, color: "var(--ink-muted)", lineHeight: 1.4 }}>{t("winery.tip")}</div>
               <button
                 onClick={() => setOpen(false)}
                 style={{
@@ -523,7 +499,7 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
                   cursor: "pointer",
                 }}
               >
-                Listo
+                {t("winery.done")}
               </button>
             </div>
           </div>

@@ -1,4 +1,6 @@
 import { business } from "../data/business";
+import { useTranslation } from "../hooks/useTranslation";
+import { useLocale } from "../context/LocaleContext";
 
 type HeroProps = {
   onExplore: () => void;
@@ -6,7 +8,14 @@ type HeroProps = {
   totalBodegas: number;
 };
 
-export function Hero({ onExplore, totalWines, totalBodegas }: HeroProps) {
+export function Hero({ onExplore }: HeroProps) {
+  const { t } = useTranslation();
+  const { currency, rateType } = useLocale();
+
+  // Mostrar badge dinámico con moneda y tipo de cambio
+  const currencyLabel = currency === "ARS" ? "ARS" : currency === "BRL" ? "BRL" : "USD";
+  const rateLabel = currency === "ARS" ? "" : rateType === "official" ? " · OFICIAL" : " · BLUE";
+
   return (
     <section
       style={{
@@ -18,7 +27,6 @@ export function Hero({ onExplore, totalWines, totalBodegas }: HeroProps) {
         position: "relative",
       }}
     >
-      {/* Watermark ilustración tipo carta */}
       <div
         aria-hidden
         style={{
@@ -43,7 +51,6 @@ export function Hero({ onExplore, totalWines, totalBodegas }: HeroProps) {
           gap: 18,
         }}
       >
-        {/* Eyebrow */}
         <div
           style={{
             display: "inline-flex",
@@ -55,26 +62,11 @@ export function Hero({ onExplore, totalWines, totalBodegas }: HeroProps) {
             fontWeight: 600,
           }}
         >
-          <span
-            style={{
-              width: 28,
-              height: 1,
-              background: "var(--gold-muted)",
-              display: "inline-block",
-            }}
-          />
-          TIENDA DE VINOS · CIUDAD DE MENDOZA
-          <span
-            style={{
-              width: 28,
-              height: 1,
-              background: "var(--gold-muted)",
-              display: "inline-block",
-            }}
-          />
+          <span style={{ width: 28, height: 1, background: "var(--gold-muted)", display: "inline-block" }} />
+          {t("hero.eyebrow")}
+          <span style={{ width: 28, height: 1, background: "var(--gold-muted)", display: "inline-block" }} />
         </div>
 
-        {/* Título */}
         <div style={{ display: "grid", gap: 8 }}>
           <h1
             style={{
@@ -120,14 +112,12 @@ export function Hero({ onExplore, totalWines, totalBodegas }: HeroProps) {
               maxWidth: 520,
             }}
           >
-            {business.heroClaim} — <span style={{ color: "var(--gold-light)" }}> {totalWines} etiquetas</span> de
-            <span style={{ color: "var(--gold-light)" }}> {totalBodegas} bodegas</span> mendocinas, curadas para turistas y locales.
+            {t("hero.claim")} — {t("hero.subclaim")}
             <br />
-            <span style={{ color: "rgba(255,253,248,0.72)", fontSize: 13 }}>Peatonal Sarmiento 110 · {business.hours}</span>
+            <span style={{ color: "rgba(255,253,248,0.72)", fontSize: 13 }}>{t("hero.hours")}</span>
           </p>
         </div>
 
-        {/* CTA + stats */}
         <div
           style={{
             display: "flex",
@@ -153,7 +143,7 @@ export function Hero({ onExplore, totalWines, totalBodegas }: HeroProps) {
               boxShadow: "0 8px 24px rgba(201,168,106,0.28)",
             }}
           >
-            {business.heroCta} →
+            {t("hero.cta")} →
           </button>
 
           <div
@@ -188,14 +178,14 @@ export function Hero({ onExplore, totalWines, totalBodegas }: HeroProps) {
                   boxShadow: "0 0 0 4px rgba(74,222,128,0.18)",
                 }}
               />
-              CARTA OCTUBRE · ARS
+              {t("hero.badge")} · {currencyLabel}
+              {rateLabel}
             </span>
             <span style={{ opacity: 0.7 }}>•</span>
-            <span>QR · WhatsApp · Hotel</span>
+            <span>{t("hero.qr")}</span>
           </div>
         </div>
 
-        {/* Info bar */}
         <div
           style={{
             marginTop: 12,
@@ -206,9 +196,9 @@ export function Hero({ onExplore, totalWines, totalBodegas }: HeroProps) {
           }}
         >
           {[
-            { k: "+1100", v: "etiquetas en tienda" },
-            { k: "20%", v: "off llevando 6" },
-            { k: "Degus", v: "terraza & cata" },
+            { k: t("hero.stats1k"), v: t("hero.stats1kLabel") },
+            { k: t("hero.statsOff"), v: t("hero.statsOffLabel") },
+            { k: t("hero.statsDegus"), v: t("hero.statsDegusLabel") },
           ].map((s) => (
             <div
               key={s.k}

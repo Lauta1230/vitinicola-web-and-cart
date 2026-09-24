@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { Wine } from "../data/catalog";
 import { WineCard } from "./WineCard";
+import { useTranslation } from "../hooks/useTranslation";
 
 type Props = {
   wines: Wine[];
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export function Catalog({ wines, query, bodega, onOpen }: Props) {
+  const { t } = useTranslation();
   const grouped = useMemo(() => {
     const map = new Map<string, Wine[]>();
     for (const w of wines) {
@@ -35,17 +37,16 @@ export function Catalog({ wines, query, bodega, onOpen }: Props) {
         }}
       >
         <div style={{ fontSize: 28, marginBottom: 8 }}>🔍</div>
-        <div style={{ fontWeight: 800, color: "var(--navy)", fontSize: 16 }}>Sin resultados</div>
-        <div style={{ fontSize: 13, marginTop: 6, color: "var(--ink-muted)", lineHeight: 1.5 }}>
-          Probá con otro término. Ej: <strong>Quimera</strong>, <strong>Malbec</strong>, <strong>Zuccardi</strong>.
-          <br />
-          También podés cambiar de bodega o limpiar filtros.
-        </div>
+        <div style={{ fontWeight: 800, color: "var(--navy)", fontSize: 16 }}>{t("catalog.noResultsTitle")}</div>
+        <div
+          style={{ fontSize: 13, marginTop: 6, color: "var(--ink-muted)", lineHeight: 1.5 }}
+          dangerouslySetInnerHTML={{ __html: t("catalog.noResultsDesc") }}
+        />
+        <div style={{ fontSize: 12, marginTop: 6, color: "var(--ink-muted)" }}>{t("catalog.noResultsHint")}</div>
       </div>
     );
   }
 
-  // Cuando hay búsqueda activa: grilla plana con bodega visible
   if (isFiltered) {
     return (
       <div>
@@ -63,7 +64,7 @@ export function Catalog({ wines, query, bodega, onOpen }: Props) {
           }}
         >
           <span style={{ width: 18, height: 1, background: "var(--line-strong)", display: "inline-block" }} />
-          RESULTADOS · {wines.length} ETIQUETAS
+          {t("catalog.results", { count: wines.length })}
           <span style={{ width: 18, height: 1, background: "var(--line-strong)", display: "inline-block" }} />
         </div>
         <div
@@ -81,7 +82,6 @@ export function Catalog({ wines, query, bodega, onOpen }: Props) {
     );
   }
 
-  // Sin filtros: carta editorial agrupada por bodega
   return (
     <div style={{ display: "grid", gap: 22 }}>
       {grouped.map(([bodegaName, items]) => (
@@ -93,7 +93,6 @@ export function Catalog({ wines, query, bodega, onOpen }: Props) {
             border: "none",
           }}
         >
-          {/* Encabezado de sección tipo carta */}
           <div
             style={{
               display: "flex",
@@ -163,11 +162,12 @@ export function Catalog({ wines, query, bodega, onOpen }: Props) {
               >
                 {items.length}
               </span>
-              <span style={{ opacity: 0.7 }}>pág. {items[0]?.pagina_carta}</span>
+              <span style={{ opacity: 0.7 }}>
+                {t("common.pagina")} {items[0]?.pagina_carta}
+              </span>
             </div>
           </div>
 
-          {/* Lista de vinos estilo carta: una columna, filas elegantes */}
           <div style={{ display: "grid", gap: 8 }}>
             {items.map((w) => (
               <WineCard key={w.id} wine={w} onOpen={onOpen} showBodega={false} />
