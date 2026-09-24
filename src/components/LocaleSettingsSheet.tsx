@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocale } from "../context/LocaleContext";
 import { useTranslation } from "../hooks/useTranslation";
@@ -13,269 +13,302 @@ export function LocaleSettingsSheet({ triggerLabel }: Props) {
   const { lang, currency, rateType, setLang, setCurrency, setRateType } = useLocale();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const sheetRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
   const isARS = currency === "ARS";
 
+  // Posicionamiento contextual anclado al botón
+  const updatePosition = () => {
+    const btn = buttonRef.current;
+    const pop = popoverRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const viewportW = window.innerWidth;
+    const viewportH = window.innerHeight;
+    const gap = 8;
+    const popH = pop ? pop.offsetHeight : 260;
+
+    // Ancho: min(92vw, 320px)
+    const width = Math.min(Math.floor(viewportW * 0.92), 320);
+
+    // Horizontal: alineado al borde derecho del botón
+    let left = rect.right - width;
+    // No salir por laterales
+    left = Math.max(8, Math.min(left, viewportW - width - 8));
+
+    // Vertical: debajo del botón
+    let top = rect.bottom + gap;
+    // Si no entra debajo, reposicionar arriba
+    if (top + popH + 8 > viewportH) {
+      const above = rect.top - popH - gap;
+      if (above >= 8) top = above;
+      else top = Math.max(8, viewportH - popH - 8);
+    }
+
+    setPos({ top, left, width });
+  };
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    // Calcular en próximo frame para tener medidas
+    const id = requestAnimationFrame(() => updatePosition());
+    return () => cancelAnimationFrame(id);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onResize = () => updatePosition();
+    const onScroll = () => {
+      // Header es sticky, el botón no se mueve con scroll vertical de la página,
+      // pero si el usuario hace scroll, el popover debe seguir anclado.
+      // Como usamos fixed y Header es sticky, la posición sigue válida sin recalcular
+      // en cada scroll; solo recalculamos en resize.
+      // Para seguridad, recalculamos en scroll también, pero sin forzar layout excesivo.
+      updatePosition();
+    };
+    window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [open]);
+
+  // ESC + click fuera
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    window.addEventListener("keydown", onKey);
-    const scrollY = window.scrollY;
-    const prevOverflow = document.body.style.overflow;
-    const prevPaddingRight = document.body.style.paddingRight;
-    // Evitar salto por scrollbar: compensar si hay scrollbar
-    const scrollbarGap = window.innerWidth - document.documentElement.clientWidth;
-    if (scrollbarGap > 0) {
-      document.body.style.paddingRight = `${scrollbarGap}px`;
-    }
-    document.body.style.overflow = "hidden";
-    requestAnimationFrame(() => {
-      sheetRef.current?.focus({ preventScroll: true } as unknown as FocusOptions);
-    });
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prevOverflow;
-      document.body.style.paddingRight = prevPaddingRight;
-      if (Math.abs(window.scrollY - scrollY) > 2) {
-        window.scrollTo({ top: scrollY, behavior: "instant" as ScrollBehavior });
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(target)
+      ) {
+        setOpen(false);
       }
     };
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("touchstart", onDown, { passive: true } as any);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("touchstart", onDown);
+    };
+  }, [open]);
+
+  // Focus sin mover viewport
+  useEffect(() => {
+    if (!open) return;
+    requestAnimationFrame(() => {
+      const first = popoverRef.current?.querySelector("button") as HTMLElement | null;
+      first?.focus({ preventScroll: true } as any);
+    });
   }, [open]);
 
   const currentLabel = `${langLabels[lang].split(" ")[0]} ${lang.toUpperCase()} · ${currency === "ARS" ? "$" : currency === "BRL" ? "R$" : "U$S"} ${currency}`;
 
-  const overlay = open ? (
+  const popover = open ? (
     <div
+      ref={popoverRef}
       role="dialog"
-      aria-modal="true"
+      aria-modal="false"
       aria-label={t("settings.title")}
-      onClick={() => setOpen(false)}
+      tabIndex={-1}
       style={{
         position: "fixed",
-        inset: 0,
-        width: "100vw",
-        height: "100dvh",
+        top: pos ? pos.top : -9999,
+        left: pos ? pos.left : -9999,
+        width: pos ? pos.width : 320,
+        maxWidth: "min(92vw, 320px)",
+        background: "var(--paper-warm)",
+        border: "1px solid var(--line)",
+        borderRadius: 16,
+        boxShadow: "0 8px 32px rgba(15,46,64,0.14), 0 2px 8px rgba(15,46,64,0.08)",
         zIndex: 100,
-        background: "rgba(10, 34, 48, 0.52)",
-        backdropFilter: "blur(6px)",
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "center",
-        padding: 12,
-        // Asegurar que no hereda transform/filter del Header
-        transform: "none",
+        overflow: "hidden",
+        outline: "none",
+        opacity: pos ? 1 : 0,
+        transform: pos ? "translateY(0)" : "translateY(-4px)",
+        transition: "opacity 150ms ease, transform 150ms ease",
+        // Para no heredar stacking del Header
         filter: "none",
+        backdropFilter: "none",
       }}
     >
+      <div style={{ padding: "12px 12px 10px", display: "grid", gap: 12 }}>
+        {/* IDIOMA */}
+        <section>
+          <div style={{ fontSize: 10, letterSpacing: "0.10em", fontWeight: 800, color: "var(--gold-muted)", marginBottom: 8 }}>
+            {t("settings.language").toUpperCase()}
+          </div>
+          <div style={{ display: "grid", gap: 6 }}>
+            {(["es", "pt", "en"] as Lang[]).map((l) => {
+              const active = lang === l;
+              const flag = l === "es" ? "🇦🇷" : l === "pt" ? "🇧🇷" : "🇺🇸";
+              const name = l === "es" ? "Español" : l === "pt" ? "Português" : "English";
+              return (
+                <button
+                  key={l}
+                  onClick={() => setLang(l)}
+                  aria-pressed={active}
+                  style={{
+                    height: 36,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "0 10px",
+                    borderRadius: 10,
+                    border: active ? "1px solid var(--navy)" : "1px solid var(--line)",
+                    background: active ? "var(--navy)" : "var(--white)",
+                    color: active ? "var(--paper-warm)" : "var(--ink)",
+                    fontWeight: active ? 800 : 600,
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 16 }}>{flag}</span>
+                    <span>{name}</span>
+                  </span>
+                  <span
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 999,
+                      display: "grid",
+                      placeItems: "center",
+                      background: active ? "var(--gold)" : "transparent",
+                      color: active ? "var(--navy)" : "transparent",
+                      border: active ? "1px solid var(--gold)" : "1px solid var(--line)",
+                      fontSize: 11,
+                      fontWeight: 900,
+                    }}
+                    aria-hidden
+                  >
+                    {active ? "✓" : ""}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <div style={{ height: 1, background: "var(--line)", opacity: 0.9 }} />
+
+        {/* MONEDA */}
+        <section>
+          <div style={{ fontSize: 10, letterSpacing: "0.10em", fontWeight: 800, color: "var(--gold-muted)", marginBottom: 8 }}>
+            {t("settings.currency").toUpperCase()}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+            {(["ARS", "BRL", "USD"] as Currency[]).map((c) => {
+              const active = currency === c;
+              return (
+                <button
+                  key={c}
+                  onClick={() => setCurrency(c)}
+                  aria-pressed={active}
+                  style={{
+                    height: 38,
+                    borderRadius: 10,
+                    border: active ? "1px solid var(--navy)" : "1px solid var(--line)",
+                    background: active ? "var(--navy)" : "var(--white)",
+                    color: active ? "var(--paper-warm)" : "var(--ink-soft)",
+                    fontWeight: active ? 800 : 700,
+                    fontSize: 12,
+                    cursor: "pointer",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 0,
+                  }}
+                >
+                  <span style={{ fontSize: 12, fontWeight: 900 }}>{c === "ARS" ? "$" : c === "BRL" ? "R$" : "U$S"}</span>
+                  <span style={{ fontSize: 10, opacity: active ? 0.9 : 0.7 }}>{c}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <div style={{ height: 1, background: "var(--line)", opacity: 0.9 }} />
+
+        {/* TIPO DE CAMBIO */}
+        <section>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <span style={{ fontSize: 10, letterSpacing: "0.10em", fontWeight: 800, color: "var(--gold-muted)" }}>
+              {t("settings.rate").toUpperCase()}
+            </span>
+            {isARS && (
+              <span style={{ fontSize: 9, color: "var(--ink-muted)", background: "var(--paper-dark)", border: "1px solid var(--line)", padding: "1px 6px", borderRadius: 999 }}>
+                {t("settings.rateDisabledHint")}
+              </span>
+            )}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, opacity: isARS ? 0.6 : 1 }}>
+            {(["official", "blue"] as RateType[]).map((r) => {
+              const active = rateType === r;
+              return (
+                <button
+                  key={r}
+                  onClick={() => setRateType(r)}
+                  aria-pressed={active}
+                  style={{
+                    height: 34,
+                    borderRadius: 10,
+                    border: active ? "1px solid var(--navy)" : "1px solid var(--line)",
+                    background: active ? "var(--navy)" : "var(--white)",
+                    color: active ? "var(--paper-warm)" : "var(--ink-soft)",
+                    fontWeight: 800,
+                    fontSize: 11,
+                    cursor: isARS ? "not-allowed" : "pointer",
+                    opacity: isARS && !active ? 0.7 : 1,
+                  }}
+                >
+                  {r === "official" ? t("settings.rateOfficial") : t("settings.rateBlue")}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+
+      {/* Nota compacta opcional, sutil */}
       <div
-        ref={sheetRef}
-        tabIndex={-1}
-        onClick={(e) => e.stopPropagation()}
         style={{
-          width: "100%",
-          maxWidth: 520,
-          maxHeight: "84dvh",
-          background: "var(--paper-warm)",
-          borderRadius: "20px 20px 16px 16px",
-          boxShadow: "var(--shadow-strong)",
-          border: "1px solid var(--line)",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          outline: "none",
-          zIndex: 101,
+          padding: "6px 12px 10px",
+          fontSize: 10,
+          color: "var(--ink-muted)",
+          borderTop: "1px solid var(--line)",
+          background: "rgba(201,168,106,0.06)",
+          lineHeight: 1.3,
+          textAlign: "center",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 0" }}>
-          <span style={{ width: 36, height: 4, borderRadius: 999, background: "var(--line-strong)", display: "block" }} />
-        </div>
-
-        <div style={{ padding: "12px 16px 10px", borderBottom: "1px solid var(--line)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-            <div>
-              <div style={{ fontFamily: "ui-serif, Georgia, serif", fontWeight: 800, color: "var(--navy)", fontSize: 16, lineHeight: 1 }}>
-                {t("settings.title")}
-              </div>
-              <div style={{ fontSize: 12, color: "var(--ink-muted)", marginTop: 2 }}>{t("settings.subtitle")}</div>
-            </div>
-            <button
-              onClick={() => setOpen(false)}
-              aria-label={t("settings.close")}
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 999,
-                border: "1px solid var(--line)",
-                background: "var(--white)",
-                color: "var(--ink-soft)",
-                display: "grid",
-                placeItems: "center",
-                cursor: "pointer",
-              }}
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-
-        <div style={{ overflow: "auto", padding: 16, display: "grid", gap: 18, WebkitOverflowScrolling: "touch" }}>
-          {/* Idioma */}
-          <section>
-            <div style={{ fontSize: 11, letterSpacing: "0.10em", fontWeight: 800, color: "var(--ink-muted)", marginBottom: 8 }}>
-              {t("settings.language").toUpperCase()}
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-              {(["es", "pt", "en"] as Lang[]).map((l) => {
-                const active = lang === l;
-                return (
-                  <button
-                    key={l}
-                    onClick={() => setLang(l)}
-                    aria-pressed={active}
-                    style={{
-                      height: 44,
-                      borderRadius: 12,
-                      border: active ? "1px solid var(--navy)" : "1px solid var(--line)",
-                      background: active ? "var(--navy)" : "var(--white)",
-                      color: active ? "var(--paper-warm)" : "var(--ink)",
-                      fontWeight: 800,
-                      fontSize: 13,
-                      cursor: "pointer",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 2,
-                    }}
-                  >
-                    <span style={{ fontSize: 16 }}>{l === "es" ? "🇦🇷" : l === "pt" ? "🇧🇷" : "🇺🇸"}</span>
-                    <span style={{ fontSize: 12 }}>{l.toUpperCase()}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Moneda */}
-          <section>
-            <div style={{ fontSize: 11, letterSpacing: "0.10em", fontWeight: 800, color: "var(--ink-muted)", marginBottom: 8 }}>
-              {t("settings.currency").toUpperCase()}
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-              {(["ARS", "BRL", "USD"] as Currency[]).map((c) => {
-                const active = currency === c;
-                return (
-                  <button
-                    key={c}
-                    onClick={() => setCurrency(c)}
-                    aria-pressed={active}
-                    style={{
-                      height: 44,
-                      borderRadius: 12,
-                      border: active ? "1px solid var(--navy)" : "1px solid var(--line)",
-                      background: active ? "var(--navy)" : "var(--white)",
-                      color: active ? "var(--paper-warm)" : "var(--ink)",
-                      fontWeight: 800,
-                      fontSize: 12,
-                      cursor: "pointer",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 1,
-                    }}
-                  >
-                    <span style={{ fontSize: 14, fontWeight: 900 }}>{c === "ARS" ? "$" : c === "BRL" ? "R$" : "U$S"}</span>
-                    <span style={{ fontSize: 11, opacity: active ? 0.9 : 0.7 }}>{c}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Tipo de cambio */}
-          <section>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-              <span style={{ fontSize: 11, letterSpacing: "0.10em", fontWeight: 800, color: "var(--ink-muted)" }}>
-                {t("settings.rate").toUpperCase()}
-              </span>
-              {isARS && (
-                <span style={{ fontSize: 10, color: "var(--ink-muted)", background: "var(--paper-dark)", border: "1px solid var(--line)", padding: "2px 6px", borderRadius: 999 }}>
-                  {t("settings.rateDisabledHint")}
-                </span>
-              )}
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, opacity: isARS ? 0.6 : 1 }}>
-              {(["official", "blue"] as RateType[]).map((r) => {
-                const active = rateType === r;
-                return (
-                  <button
-                    key={r}
-                    onClick={() => setRateType(r)}
-                    aria-pressed={active}
-                    style={{
-                      height: 40,
-                      borderRadius: 12,
-                      border: active ? "1px solid var(--navy)" : "1px solid var(--line)",
-                      background: active ? "var(--navy)" : "var(--white)",
-                      color: active ? "var(--paper-warm)" : "var(--ink-soft)",
-                      fontWeight: 800,
-                      fontSize: 12,
-                      cursor: isARS ? "not-allowed" : "pointer",
-                      opacity: isARS && !active ? 0.7 : 1,
-                    }}
-                  >
-                    {r === "official" ? t("settings.rateOfficial") : t("settings.rateBlue")}
-                  </button>
-                );
-              })}
-            </div>
-            <div
-              style={{
-                marginTop: 8,
-                padding: "8px 10px",
-                borderRadius: 10,
-                background: "rgba(201,168,106,0.10)",
-                border: "1px solid rgba(201,168,106,0.18)",
-                fontSize: 11,
-                color: "var(--ink-soft)",
-                lineHeight: 1.4,
-              }}
-            >
-              <strong style={{ color: "var(--navy)" }}>⚠</strong> {t("settings.referenceNote")}
-            </div>
-          </section>
-        </div>
-
-        <div style={{ padding: "12px 16px", borderTop: "1px solid var(--line)", display: "flex", justifyContent: "flex-end" }}>
-          <button
-            onClick={() => setOpen(false)}
-            style={{
-              height: 36,
-              padding: "0 16px",
-              borderRadius: 999,
-              border: "1px solid var(--navy)",
-              background: "var(--navy)",
-              color: "var(--paper-warm)",
-              fontWeight: 700,
-              fontSize: 13,
-              cursor: "pointer",
-            }}
-          >
-            {t("settings.save")}
-          </button>
-        </div>
+        {t("settings.referenceNote")}
       </div>
+
+      <style>{`
+        @media (prefers-reduced-motion: reduce) {
+          div[role="dialog"] { transition: none !important; }
+        }
+      `}</style>
     </div>
   ) : null;
 
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        ref={buttonRef}
+        onClick={() => setOpen((v) => !v)}
         aria-label={t("header.settings")}
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -286,23 +319,26 @@ export function LocaleSettingsSheet({ triggerLabel }: Props) {
           height: 32,
           padding: "0 10px",
           borderRadius: 999,
-          border: "1px solid var(--line-strong)",
-          background: "var(--white)",
-          color: "var(--navy)",
+          border: open ? "1px solid var(--navy)" : "1px solid var(--line-strong)",
+          background: open ? "var(--navy)" : "var(--white)",
+          color: open ? "var(--paper-warm)" : "var(--navy)",
           fontSize: 11,
           fontWeight: 800,
           letterSpacing: "0.06em",
           cursor: "pointer",
           whiteSpace: "nowrap",
           flex: "0 0 auto",
+          boxShadow: open ? "0 2px 8px rgba(15,46,64,0.12)" : "none",
         }}
       >
         <span aria-hidden>{lang === "es" ? "🇦🇷" : lang === "pt" ? "🇧🇷" : "🇺🇸"}</span>
         <span>{triggerLabel ?? currentLabel}</span>
-        <span aria-hidden style={{ fontSize: 10, opacity: 0.7 }}>▾</span>
+        <span aria-hidden style={{ fontSize: 10, opacity: 0.7, transform: open ? "rotate(180deg)" : "none", transition: "transform 120ms" }}>
+          ▾
+        </span>
       </button>
 
-      {open && typeof document !== "undefined" ? createPortal(overlay, document.body) : null}
+      {open && typeof document !== "undefined" ? createPortal(popover, document.body) : null}
     </>
   );
 }
