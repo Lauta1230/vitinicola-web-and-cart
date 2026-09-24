@@ -50,7 +50,7 @@ export function SelectionTrigger({ count, onClick, disabled = false }: Props) {
       className="sel-trigger"
       onClick={onClick ?? open}
       disabled={disabled}
-      aria-label={`${t("selection.openAria")}, ${t("selection.countMany", { count: n })}`}
+      aria-label={`${t("selection.openAria")}, ${n === 1 ? t("selection.countOne") : t("selection.countMany", { count: n })}`}
     >
       <BookmarkIcon />
       <span className="sel-trigger-label">{t("selection.title")}</span>
