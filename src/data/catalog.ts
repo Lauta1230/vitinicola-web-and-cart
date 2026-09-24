@@ -1,5 +1,26 @@
 import rawData from "../../data/inventario-carta.json";
 
+export type WineTastingSource = "official" | "business-approved" | "unknown";
+
+/**
+ * FASE 7 — Información técnica/sensorial explícita (OPCIONAL).
+ *
+ * Ningún vino del inventario actual define estos campos: quedan `undefined`
+ * y la Ficha de Cata muestra su estado vacío. NO se rellenan automáticamente
+ * (ni por IA, ni por inferencia del nombre): solo mediante curaduría futura
+ * con fuente identificada (`source`).
+ */
+export type WineTasting = {
+  source?: WineTastingSource;
+  aromas?: string[];
+  palate?: string;
+  acidity?: string;
+  tannins?: string;
+  body?: string;
+  finish?: string;
+  temperature?: string;
+};
+
 export type Wine = {
   id: string;
   pagina_carta: number;
@@ -17,6 +38,10 @@ export type Wine = {
   otros_datos_explicitos: string | null;
   estado_lectura: "OK" | "DUDOSO" | "ILEGIBLE" | "POSIBLE_DUPLICADO";
   notas_validacion: string | null;
+  /** FASE 7 — solo si existe información curada y confirmada. Undefined hoy. */
+  tasting?: WineTasting;
+  /** FASE 7 — solo si existe información curada y confirmada. Undefined hoy. */
+  pairings?: string[];
 };
 
 type RawInventory = typeof rawData;

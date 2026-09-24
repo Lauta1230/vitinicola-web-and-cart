@@ -407,6 +407,43 @@ img {
   color: var(--gold-muted);
 }
 
+/* =============================================
+   FASE 7 — Sommelier (buscador guiado, capa secundaria)
+   Reutiliza overlay/chips/filas/paginación existentes
+   ============================================= */
+.somm-overlay {
+  z-index: var(--z-sommelier);
+}
+
+/* Fila de triggers de descubrimiento (Regalos + Encontrá tu vino) */
+.disc-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Explicación de coincidencia: criterios activos elegidos */
+.somm-matchline {
+  font-size: 10.5px;
+  color: var(--ink-muted);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+
+/* Empty state: criterios activos quitables individualmente */
+.somm-removable {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.somm-removable .gift-chip {
+  background: var(--paper);
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .gift-trigger,
   .gift-chip,

@@ -7,7 +7,7 @@ import { QuickFilters } from "./components/QuickFilters";
 import { PriceOccasionFilters } from "./components/PriceOccasionFilters";
 import { Catalog } from "./components/Catalog";
 import { Footer } from "./components/Footer";
-import { LazyGiftExplorer, LazySelectionSheet, LazyWineSheet } from "./components/lazySheets";
+import { LazyGiftExplorer, LazySelectionSheet, LazySommelier, LazyWineSheet } from "./components/lazySheets";
 import { ServiceModeSwitch } from "./components/ServiceModeSwitch";
 import { TableActionBar } from "./components/TableActionBar";
 import { SelectionTrigger } from "./components/SelectionTrigger";
@@ -39,6 +39,9 @@ function AppInner() {
   // FASE 6 — Gift Explorer: disponible solo en "Llevar / Regalar" (capa
   // secundaria; no compite con la experiencia de mesa). Estado local del sheet.
   const [giftOpen, setGiftOpen] = useState(false);
+  // FASE 7 — Sommelier: buscador guiado secundario, disponible en AMBOS modos.
+  // Estado local del sheet; no toca filtros ni selección globales.
+  const [sommOpen, setSommOpen] = useState(false);
   const { t } = useTranslation();
 
   const catalogAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -134,23 +137,45 @@ function AppInner() {
             onOccasionChange={setOccasion}
           />
 
-          {serviceMode === "takeaway" && (
+          {/* FASE 6/7 — triggers de descubrimiento secundarios (Progressive Disclosure) */}
+          <div className="disc-row">
+            {serviceMode === "takeaway" && (
+              <button
+                type="button"
+                className="gift-trigger"
+                aria-haspopup="dialog"
+                onClick={() => setGiftOpen(true)}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <rect x="4" y="10" width="16" height="10" rx="1.5" />
+                  <path d="M12 10v10" />
+                  <path d="M4 10h16" />
+                  <path d="M12 10c-4.5 0-6-1.8-6-3.4C6 5.1 7.2 4 8.6 4 10.6 4 12 6.4 12 10Z" />
+                  <path d="M12 10c4.5 0 6-1.8 6-3.4C18 5.1 16.8 4 15.4 4 13.4 4 12 6.4 12 10Z" />
+                </svg>
+                {t("gifts.explore")}
+              </button>
+            )}
             <button
               type="button"
               className="gift-trigger"
               aria-haspopup="dialog"
-              onClick={() => setGiftOpen(true)}
+              onClick={() => setSommOpen(true)}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <rect x="4" y="10" width="16" height="10" rx="1.5" />
-                <path d="M12 10v10" />
-                <path d="M4 10h16" />
-                <path d="M12 10c-4.5 0-6-1.8-6-3.4C6 5.1 7.2 4 8.6 4 10.6 4 12 6.4 12 10Z" />
-                <path d="M12 10c4.5 0 6-1.8 6-3.4C18 5.1 16.8 4 15.4 4 13.4 4 12 6.4 12 10Z" />
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden>
+                <path d="M12 3v3" />
+                <path d="M12 18v3" />
+                <path d="M3 12h3" />
+                <path d="M18 12h3" />
+                <path d="m5.6 5.6 2.1 2.1" />
+                <path d="m16.3 16.3 2.1 2.1" />
+                <path d="m18.4 5.6-2.1 2.1" />
+                <path d="m7.7 16.3-2.1 2.1" />
+                <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
               </svg>
-              {t("gifts.explore")}
+              {t("sommelier.trigger")}
             </button>
-          )}
+          </div>
 
           <WineryExplorer totalBodegas={bodegaList.length} activeBodega={bodega} onSelect={setBodega} />
 
@@ -297,6 +322,11 @@ function AppInner() {
       {serviceMode === "takeaway" && giftOpen && (
         <Suspense fallback={<SheetShellFallback />}>
           <LazyGiftExplorer onClose={() => setGiftOpen(false)} onOpenWine={setSelected} />
+        </Suspense>
+      )}
+      {sommOpen && (
+        <Suspense fallback={<SheetShellFallback />}>
+          <LazySommelier onClose={() => setSommOpen(false)} onOpenWine={setSelected} />
         </Suspense>
       )}
     </div>

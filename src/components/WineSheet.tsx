@@ -85,6 +85,32 @@ export function WineSheet({ wine, onClose }: Props) {
   const selectable = normalizeWineId(wine.id) !== null;
   const inSelection = selectable && isSelected(wine.id);
 
+  // FASE 7 — Ficha de cata: SOLO campos explícitos en el dato. Si no existen,
+  // se muestra el estado vacío discreto (cero información inventada).
+  const tasting = wine.tasting;
+  const tastingRows: Array<[string, string]> = tasting
+    ? (
+        [
+          [t("wine.tastingPalate"), tasting.palate],
+          [t("wine.tastingAcidity"), tasting.acidity],
+          [t("wine.tastingTannins"), tasting.tannins],
+          [t("wine.tastingBody"), tasting.body],
+          [t("wine.tastingFinish"), tasting.finish],
+          [t("wine.tastingTemperature"), tasting.temperature],
+        ] as Array<[string, string | undefined]>
+      ).filter((r): r is [string, string] => Boolean(r[1]))
+    : [];
+  const tastingAromas = tasting?.aromas?.filter(Boolean) ?? [];
+  const tastingPairings = wine.pairings?.filter(Boolean) ?? [];
+  const hasTastingContent =
+    tastingRows.length > 0 || tastingAromas.length > 0 || tastingPairings.length > 0;
+  const tastingSourceLabel =
+    tasting?.source === "official"
+      ? t("wine.tastingSourceOfficial")
+      : tasting?.source === "business-approved"
+        ? t("wine.tastingSourceBusiness")
+        : null;
+
   const handleToggleSelection = () => {
     if (!selectable) return;
     toggle(wine.id);
@@ -283,6 +309,103 @@ export function WineSheet({ wine, onClose }: Props) {
                 </>
               )}
             </div>
+          </div>
+
+          {/* FASE 7 — Ficha de cata (render condicional por disponibilidad real) */}
+          <div
+            style={{
+              background: "var(--white)",
+              border: "1px solid var(--line)",
+              borderRadius: 16,
+              padding: 14,
+              display: "grid",
+              gap: 10,
+            }}
+          >
+            <div style={{ fontSize: 11, letterSpacing: "0.10em", fontWeight: 800, color: "var(--ink-muted)" }}>
+              {t("wine.tastingTitle")}
+            </div>
+
+            {hasTastingContent ? (
+              <>
+                {tastingAromas.length > 0 && (
+                  <div style={{ display: "grid", gap: 6 }}>
+                    <div style={{ fontSize: 11, color: "var(--ink-muted)", letterSpacing: "0.06em", fontWeight: 700 }}>
+                      {t("wine.tastingAromas")}
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {tastingAromas.map((a) => (
+                        <span
+                          key={a}
+                          style={{
+                            padding: "6px 10px",
+                            borderRadius: 999,
+                            border: "1px solid var(--line-strong)",
+                            background: "var(--paper)",
+                            color: "var(--ink)",
+                            fontSize: 12,
+                            fontWeight: 600,
+                          }}
+                        >
+                          {a}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {tastingRows.length > 0 && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    {tastingRows.map(([label, value]) => (
+                      <div key={label}>
+                        <div style={{ fontSize: 11, color: "var(--ink-muted)", letterSpacing: "0.06em", fontWeight: 700 }}>
+                          {label}
+                        </div>
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)", marginTop: 2, lineHeight: 1.4 }}>
+                          {value}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {tastingPairings.length > 0 && (
+                  <div style={{ display: "grid", gap: 6 }}>
+                    <div style={{ fontSize: 11, color: "var(--ink-muted)", letterSpacing: "0.06em", fontWeight: 700 }}>
+                      {t("wine.tastingPairings")}
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {tastingPairings.map((pr) => (
+                        <span
+                          key={pr}
+                          style={{
+                            padding: "6px 10px",
+                            borderRadius: 999,
+                            border: "1px solid var(--line-strong)",
+                            background: "var(--paper)",
+                            color: "var(--ink)",
+                            fontSize: 12,
+                            fontWeight: 600,
+                          }}
+                        >
+                          {pr}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {tastingSourceLabel && (
+                  <div style={{ fontSize: 11, color: "var(--ink-muted)", lineHeight: 1.4 }}>
+                    ✓ {tastingSourceLabel}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{ fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.5 }}>
+                {t("wine.tastingEmpty")}
+              </div>
+            )}
           </div>
 
           <div style={{ display: "grid", gap: 8, opacity: 0.92 }}>

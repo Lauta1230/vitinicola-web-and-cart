@@ -27,6 +27,10 @@ export const LazyGiftExplorer = lazy(() =>
   import("./GiftExplorer").then((m) => ({ default: m.GiftExplorer }))
 );
 
+export const LazySommelier = lazy(() =>
+  import("./SommelierExplorer").then((m) => ({ default: m.SommelierExplorer }))
+);
+
 export function preloadWineSheet(): void {
   void import("./WineSheet");
 }
