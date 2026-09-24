@@ -1,6 +1,8 @@
 import type { Wine } from "../data/catalog";
 import type { FacetKey } from "../data/styleFacets";
 import { getFacetsMap } from "../data/styleFacets";
+import type { OccasionFilter } from "../data/priceBands";
+import { isPriceInRange, isPriceInOccasion } from "../data/priceBands";
 
 function normalize(str: string): string {
   return str
@@ -23,7 +25,9 @@ export function filterWines(
   wines: Wine[],
   query: string,
   bodega: string | null,
-  facet: FacetKey = "all"
+  facet: FacetKey = "all",
+  priceRange: [number, number] | null = null,
+  occasion: OccasionFilter = "all"
 ): Wine[] {
   let result = wines;
 
@@ -38,6 +42,18 @@ export function filterWines(
       if (!f) return false;
       return f[facet] === true;
     });
+  }
+
+  // Ocasión: basada siempre en precio ARS original
+  if (occasion && occasion !== "all") {
+    result = result.filter((w) => isPriceInOccasion(w.precio, occasion));
+  }
+
+  // Rango de precio: también en ARS original
+  if (priceRange) {
+    const [min, max] = priceRange;
+    // Si el rango es el total, no filtrar para performance
+    result = result.filter((w) => isPriceInRange(w.precio, [min, max]));
   }
 
   if (query.trim()) {

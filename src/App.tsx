@@ -4,14 +4,17 @@ import { Hero } from "./components/Hero";
 import { SearchBar } from "./components/SearchBar";
 import { WineryExplorer } from "./components/WineryExplorer";
 import { QuickFilters } from "./components/QuickFilters";
+import { PriceOccasionFilters } from "./components/PriceOccasionFilters";
 import { Catalog } from "./components/Catalog";
 import { WineSheet } from "./components/WineSheet";
 import { Footer } from "./components/Footer";
 import { allWines, bodegaList } from "./data/catalog";
 import { filterWines } from "./utils/search";
 import { countFacets } from "./data/styleFacets";
+import { MIN_PRICE, MAX_PRICE } from "./data/priceBands";
 import type { Wine } from "./data/catalog";
 import type { FacetKey } from "./data/styleFacets";
+import type { OccasionFilter } from "./data/priceBands";
 import { useTranslation } from "./hooks/useTranslation";
 import "./styles/global.css";
 
@@ -19,6 +22,8 @@ function AppInner() {
   const [query, setQuery] = useState("");
   const [bodega, setBodega] = useState<string | null>(null);
   const [facet, setFacet] = useState<FacetKey>("all");
+  const [priceRange, setPriceRange] = useState<[number, number]>([MIN_PRICE, MAX_PRICE]);
+  const [occasion, setOccasion] = useState<OccasionFilter>("all");
   const [selected, setSelected] = useState<Wine | null>(null);
   const { t } = useTranslation();
 
@@ -36,7 +41,10 @@ function AppInner() {
     } as Record<FacetKey, number>;
   }, []);
 
-  const filtered = useMemo(() => filterWines(allWines, query, bodega, facet), [query, bodega, facet]);
+  const filtered = useMemo(
+    () => filterWines(allWines, query, bodega, facet, priceRange, occasion),
+    [query, bodega, facet, priceRange, occasion]
+  );
 
   const handleExplore = () => {
     const anchor = catalogAnchorRef.current;
@@ -52,9 +60,22 @@ function AppInner() {
     setQuery("");
     setBodega(null);
     setFacet("all");
+    setPriceRange([MIN_PRICE, MAX_PRICE]);
+    setOccasion("all");
   };
 
-  const hasActiveFilters = query.trim().length > 0 || bodega !== null || facet !== "all";
+  const isPriceFiltered = priceRange[0] !== MIN_PRICE || priceRange[1] !== MAX_PRICE;
+  const isOccasionFiltered = occasion !== "all";
+  const hasActiveFilters =
+    query.trim().length > 0 || bodega !== null || facet !== "all" || isPriceFiltered || isOccasionFiltered;
+
+  const activeCount = [
+    query.trim().length > 0,
+    bodega !== null,
+    facet !== "all",
+    isOccasionFiltered,
+    isPriceFiltered,
+  ].filter(Boolean).length;
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -86,6 +107,13 @@ function AppInner() {
 
           <QuickFilters active={facet} onSelect={setFacet} counts={facetCounts} />
 
+          <PriceOccasionFilters
+            priceRange={priceRange}
+            onPriceRangeChange={setPriceRange}
+            occasion={occasion}
+            onOccasionChange={setOccasion}
+          />
+
           <WineryExplorer totalBodegas={bodegaList.length} activeBodega={bodega} onSelect={setBodega} />
 
           <div
@@ -113,16 +141,21 @@ function AppInner() {
                   flex: "0 0 auto",
                 }}
               />
-              {facet !== "all"
-                ? `${t(`filters.${facet === "cabernetSauvignon" ? "cabernet" : facet === "whiteOrRose" ? "whiteRose" : facet === "authorBoutique" ? "author" : facet}` as any)} · ${filtered.length} ${t("common.vinos")}`
-                : bodega
-                ? t("catalog.bodegaCount", { bodega, count: filtered.length })
-                : t("catalog.filteredCount", { filtered: filtered.length, total: bodegaList.length })}
-              {facet !== "all" && bodega && (
-                <span style={{ opacity: 0.7 }}>
-                  {" "}
-                  · {bodega}
+              {hasActiveFilters ? (
+                <span>
+                  {t("price.activeCount", { count: activeCount })} · {filtered.length} {t("common.vinos")}
+                  {facet !== "all" && ` · ${t(`filters.${facet === "cabernetSauvignon" ? "cabernet" : facet === "whiteOrRose" ? "whiteRose" : facet === "authorBoutique" ? "author" : facet}` as any)}`}
+                  {isOccasionFiltered &&
+                    ` · ${occasion === "everyday" ? t("price.everyday") : occasion === "gift" ? t("price.gift") : t("price.collection")}`}
+                  {bodega && ` · ${bodega}`}
+                  {isPriceFiltered && ` · ${priceRange[0].toLocaleString("es-AR")}–${priceRange[1].toLocaleString("es-AR")}`}
                 </span>
+              ) : facet !== "all" ? (
+                `${t(`filters.${facet === "cabernetSauvignon" ? "cabernet" : facet === "whiteOrRose" ? "whiteRose" : facet === "authorBoutique" ? "author" : facet}` as any)} · ${filtered.length} ${t("common.vinos")}`
+              ) : bodega ? (
+                t("catalog.bodegaCount", { bodega, count: filtered.length })
+              ) : (
+                t("catalog.filteredCount", { filtered: filtered.length, total: bodegaList.length })
               )}
             </span>
             {hasActiveFilters && (
@@ -153,6 +186,8 @@ function AppInner() {
             query={query}
             bodega={bodega}
             facet={facet}
+            priceRange={priceRange}
+            occasion={occasion}
             onOpen={setSelected}
             onClearFilters={clearAllFilters}
           />

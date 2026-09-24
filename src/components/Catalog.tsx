@@ -3,17 +3,21 @@ import type { Wine } from "../data/catalog";
 import { WineCard } from "./WineCard";
 import { useTranslation } from "../hooks/useTranslation";
 import type { FacetKey } from "../data/styleFacets";
+import type { OccasionFilter } from "../data/priceBands";
+import { MIN_PRICE, MAX_PRICE } from "../data/priceBands";
 
 type Props = {
   wines: Wine[];
   query: string;
   bodega: string | null;
   facet: FacetKey;
+  priceRange: [number, number];
+  occasion: OccasionFilter;
   onOpen: (wine: Wine) => void;
   onClearFilters?: () => void;
 };
 
-export function Catalog({ wines, query, bodega, facet, onOpen, onClearFilters }: Props) {
+export function Catalog({ wines, query, bodega, facet, priceRange, occasion, onOpen, onClearFilters }: Props) {
   const { t } = useTranslation();
 
   const grouped = useMemo(() => {
@@ -26,7 +30,10 @@ export function Catalog({ wines, query, bodega, facet, onOpen, onClearFilters }:
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0], "es", { sensitivity: "base" }));
   }, [wines]);
 
-  const isFiltered = query.trim().length > 0 || bodega !== null || facet !== "all";
+  const isPriceFiltered = priceRange[0] !== MIN_PRICE || priceRange[1] !== MAX_PRICE;
+  const isOccasionFiltered = occasion !== "all";
+  const isFiltered =
+    query.trim().length > 0 || bodega !== null || facet !== "all" || isPriceFiltered || isOccasionFiltered;
 
   // Autor / Boutique: mostrar selección en preparación (no inventar)
   if (facet === "authorBoutique") {
@@ -68,8 +75,8 @@ export function Catalog({ wines, query, bodega, facet, onOpen, onClearFilters }:
   }
 
   if (wines.length === 0) {
-    // Vacío por filtros + búsqueda + bodega
     const isFacetActive = facet !== "all";
+    const isPriceActive = isPriceFiltered || isOccasionFiltered;
     return (
       <div
         style={{
@@ -83,14 +90,12 @@ export function Catalog({ wines, query, bodega, facet, onOpen, onClearFilters }:
       >
         <div style={{ fontSize: 28, marginBottom: 8 }}>🔍</div>
         <div style={{ fontWeight: 800, color: "var(--navy)", fontSize: 16 }}>
-          {isFacetActive ? t("filters.emptyTitle") : t("catalog.noResultsTitle")}
+          {isFacetActive || isPriceActive ? t("price.noResults") : t("catalog.noResultsTitle")}
         </div>
         <div style={{ fontSize: 13, marginTop: 6, color: "var(--ink-muted)", lineHeight: 1.5 }}>
-          {isFacetActive ? t("filters.emptyDesc") : (
-            <span dangerouslySetInnerHTML={{ __html: t("catalog.noResultsDesc") }} />
-          )}
+          {isFacetActive || isPriceActive ? t("price.noResultsHint") : <span dangerouslySetInnerHTML={{ __html: t("catalog.noResultsDesc") }} />}
         </div>
-        {!isFacetActive && (
+        {!isFacetActive && !isPriceActive && (
           <div style={{ fontSize: 12, marginTop: 6, color: "var(--ink-muted)" }}>{t("catalog.noResultsHint")}</div>
         )}
         {onClearFilters && (
@@ -133,7 +138,9 @@ export function Catalog({ wines, query, bodega, facet, onOpen, onClearFilters }:
           }}
         >
           <span style={{ width: 18, height: 1, background: "var(--line-strong)", display: "inline-block" }} />
-          {facet !== "all" ? t("filters.results", { count: wines.length }) : t("catalog.results", { count: wines.length })}
+          {isPriceFiltered || isOccasionFiltered || facet !== "all"
+            ? t("filters.results", { count: wines.length })
+            : t("catalog.results", { count: wines.length })}
           <span style={{ width: 18, height: 1, background: "var(--line-strong)", display: "inline-block" }} />
         </div>
         <div
