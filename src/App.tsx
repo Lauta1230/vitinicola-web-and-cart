@@ -16,16 +16,23 @@ export default function App() {
   const [bodega, setBodega] = useState<string | null>(null);
   const [selected, setSelected] = useState<Wine | null>(null);
 
-  const catalogRef = useRef<HTMLDivElement | null>(null);
+  const catalogAnchorRef = useRef<HTMLDivElement | null>(null);
 
   const filtered = useMemo(() => filterWines(allWines, query, bodega), [query, bodega]);
 
   const handleExplore = () => {
-    // Scroll suave al catálogo SIN usar scrollIntoView que mueve el viewport vertical de forma brusca en demos anteriores.
-    // Usamos window.scrollTo + cálculo de offset, solo sobre el viewport.
-    const el = catalogRef.current;
-    if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY - 72; // header offset
+    // AUDITORÍA SCROLL: antes usaba offset arbitrario -72 y el catálogo quedaba oculto
+    // bajo el header sticky + la barra de controles sticky (que ocupaba ~150px).
+    // FIX: medir altura real del header y hacer scroll al ancla #catalogo, no al interior del catálogo.
+    // El ancla tiene scroll-margin-top: calc(var(--header-h) + 12px) para que el navegador lo respete,
+    // pero aquí usamos window.scrollTo + medición precisa para CTA.
+    const anchor = catalogAnchorRef.current;
+    if (!anchor) return;
+    const header = document.querySelector("header") as HTMLElement | null;
+    const headerH = header ? header.getBoundingClientRect().height : 52;
+    // Pequeño respiro para que el inicio de la carta no quede pegado al header
+    const padding = 12;
+    const top = anchor.getBoundingClientRect().top + window.scrollY - headerH - padding;
     window.scrollTo({ top, behavior: "smooth" });
   };
 
@@ -34,9 +41,27 @@ export default function App() {
       <Header />
       <Hero totalWines={allWines.length} totalBodegas={bodegaList.length} onExplore={handleExplore} />
 
+      {/* Ancla real del catálogo: justo antes de los controles.
+          Importante: el Header es el único sticky. Los controles ya NO son sticky,
+          así evitamos doble capa sticky que tapaba media pantalla en mobile. */}
+      <div id="catalogo" ref={catalogAnchorRef} aria-label="Inicio del catálogo" />
+
       <main className="container" style={{ width: "100%", paddingTop: 16, paddingBottom: 0, flex: "1 1 auto" }}>
-        {/* Controles */}
-        <div style={{ display: "grid", gap: 12, position: "sticky", top: "var(--header-h)", zIndex: 20, paddingTop: 12, paddingBottom: 12, background: "var(--paper)", marginLeft: "calc(-1 * var(--content-pad))", marginRight: "calc(-1 * var(--content-pad))", paddingLeft: "var(--content-pad)", paddingRight: "var(--content-pad)", borderBottom: "1px solid transparent" }}>
+        {/* Controles: ahora NO sticky — scroll natural. 
+            Esto elimina el bug donde el Hero/Header/controles tapaban el inicio de la carta. */}
+        <div
+          style={{
+            display: "grid",
+            gap: 12,
+            // Antes: position: sticky, top: var(--header-h), zIndex: 20, márgenes negativos
+            // Ahora: flujo normal, sin sticky, sin z-index elevado
+            position: "relative",
+            zIndex: 1,
+            paddingTop: 4,
+            paddingBottom: 8,
+            background: "transparent",
+          }}
+        >
           <SearchBar
             value={query}
             onChange={setQuery}
@@ -46,7 +71,6 @@ export default function App() {
             onClearBodega={() => setBodega(null)}
           />
           <WineryExplorer totalBodegas={bodegaList.length} activeBodega={bodega} onSelect={setBodega} />
-          {/* Hint sutil de estado */}
           <div
             style={{
               display: "flex",
@@ -60,8 +84,17 @@ export default function App() {
               paddingLeft: 2,
             }}
           >
-            <span>
-              {bodega ? `Bodega: ${bodega} · ${filtered.length} vinos` : `${filtered.length} vinos · ${bodegaList.length} bodegas`}
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span
+                aria-hidden
+                style={{
+                  width: 18,
+                  height: 1,
+                  background: "var(--line-strong)",
+                  display: "inline-block",
+                }}
+              />
+              {bodega ? `Bodega: ${bodega} · ${filtered.length} vinos` : `Carta · ${filtered.length} vinos · ${bodegaList.length} bodegas`}
             </span>
             {(query || bodega) && (
               <button
@@ -87,8 +120,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Catálogo */}
-        <div ref={catalogRef} style={{ paddingTop: 8, paddingBottom: 16 }}>
+        {/* Catálogo en sí */}
+        <div style={{ paddingTop: 12, paddingBottom: 16 }}>
           <Catalog wines={filtered} query={query} bodega={bodega} onOpen={setSelected} />
         </div>
 
@@ -122,11 +155,11 @@ export default function App() {
             ✓
           </span>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: "var(--navy)", lineHeight: 1.3 }}>Inventario validado · 659 OK · 2 DUDOSO fuera de catálogo</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "var(--navy)", lineHeight: 1.3 }}>Carta digital · 659 etiquetas · 113 bodegas</div>
             <div style={{ fontSize: 12, color: "var(--ink-muted)", marginTop: 4, lineHeight: 1.5 }}>
-              Los 2 registros DUDOSO (VIN-053 y VIN-145) no se muestran hasta confirmación del establecimiento. Los 659 nombres y precios están intactos, exactamente como en la carta de octubre.
+              Explorá la carta como en la vinoteca. Los 2 registros DUDOSO (VIN-053 y VIN-145) permanecen fuera de la carta hasta confirmación.
               <br />
-              <span style={{ fontSize: 11, letterSpacing: "0.04em" }}>Fuente: <code>data/inventario-carta.json</code> · 113 bodegas · 12 páginas</span>
+              <span style={{ fontSize: 11, letterSpacing: "0.04em" }}>Fuente: <code>data/inventario-carta.json</code> · Octubre · ARS</span>
             </div>
           </div>
         </div>

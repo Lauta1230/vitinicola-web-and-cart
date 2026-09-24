@@ -40,13 +40,24 @@ export function WineryExplorer({ totalBodegas, activeBodega, onSelect }: Props) 
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // Bloquear scroll del body cuando sheet está abierto (mobile)
+  // Bloquear scroll del body cuando sheet está abierto (mobile) — sin salto al cerrar
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
+    const scrollY = window.scrollY;
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    // Enfocar sin scroll para no mover el viewport
+    requestAnimationFrame(() => {
+      // sheetRef puede contener el input de búsqueda
+      const input = sheetRef.current?.querySelector("input") as HTMLElement | null;
+      input?.focus({ preventScroll: true } as unknown as FocusOptions);
+    });
     return () => {
-      document.body.style.overflow = prev;
+      document.body.style.overflow = prevOverflow;
+      // Restaurar posición si el navegador la movió al enfocar
+      if (Math.abs(window.scrollY - scrollY) > 2) {
+        window.scrollTo({ top: scrollY, behavior: "instant" as ScrollBehavior });
+      }
     };
   }, [open]);
 

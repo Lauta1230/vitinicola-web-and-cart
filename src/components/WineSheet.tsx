@@ -10,18 +10,50 @@ type Props = {
 
 export function WineSheet({ wine, onClose }: Props) {
   const sheetRef = useRef<HTMLDivElement | null>(null);
+  const scrollYRef = useRef<number>(0);
 
   useEffect(() => {
     if (!wine) return;
+
+    // Preservar posición de scroll para restaurar sin salto al cerrar
+    scrollYRef.current = window.scrollY;
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
+
+    // Bloquear scroll del body sin provocar salto: fijar posición
+    const prevOverflow = document.body.style.overflow;
+    const prevPosition = document.body.style.position;
+    const prevTop = document.body.style.top;
+    const prevWidth = document.body.style.width;
+
     document.body.style.overflow = "hidden";
+    // Evitar layout shift por scrollbar: mantener ancho
+    // No usamos position: fixed aquí porque puede causar salto en iOS si no se compensa scrollY.
+    // En su lugar, solo overflow hidden es suficiente si el sheet es position: fixed y cubre viewport.
+    // Pero para asegurar que no haya scroll de fondo en iOS, añadimos touch-action none al backdrop.
+    // Guardamos scrollY para restaurar si el navegador hace scroll al enfocar.
+
+    // Intentar enfocar el sheet sin hacer scroll
+    requestAnimationFrame(() => {
+      sheetRef.current?.focus({ preventScroll: true } as unknown as FocusOptions);
+    });
+
     return () => {
       window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
+      document.body.style.overflow = prevOverflow;
+      document.body.style.position = prevPosition;
+      document.body.style.top = prevTop;
+      document.body.style.width = prevWidth;
+      // Restaurar posición exacta sin salto (el sheet ya está desmontado, no hay scrollIntoView)
+      // Usamos scrollTo con comportamiento instantáneo para no animar
+      const y = scrollYRef.current;
+      // Solo restaurar si la posición cambió (evitar scroll innecesario)
+      if (Math.abs(window.scrollY - y) > 2) {
+        window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior });
+      }
     };
   }, [wine, onClose]);
 
@@ -48,10 +80,13 @@ export function WineSheet({ wine, onClose }: Props) {
         alignItems: "flex-end",
         justifyContent: "center",
         padding: 12,
+        // Evitar que el fondo haga scroll en iOS
+        touchAction: "none",
       }}
     >
       <div
         ref={sheetRef}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{
           width: "100%",
@@ -64,6 +99,8 @@ export function WineSheet({ wine, onClose }: Props) {
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
+          outline: "none",
+          touchAction: "auto",
         }}
       >
         {/* Handle */}
@@ -155,7 +192,6 @@ export function WineSheet({ wine, onClose }: Props) {
 
         {/* Body */}
         <div style={{ overflow: "auto", padding: 16, display: "grid", gap: 14, WebkitOverflowScrolling: "touch" }}>
-          {/* Info disponible */}
           <div
             style={{
               background: "var(--white)",
@@ -189,7 +225,6 @@ export function WineSheet({ wine, onClose }: Props) {
               </div>
             </div>
 
-            {/* Nota editorial: no mostrar campos vacíos */}
             <div
               style={{
                 marginTop: 4,
@@ -212,14 +247,7 @@ export function WineSheet({ wine, onClose }: Props) {
             </div>
           </div>
 
-          {/* Espacios estructurales reservados para futuras fases — NO se muestran vacíos. Solo un hint sutil. */}
-          <div
-            style={{
-              display: "grid",
-              gap: 8,
-              opacity: 0.92,
-            }}
-          >
+          <div style={{ display: "grid", gap: 8, opacity: 0.92 }}>
             <div style={{ fontSize: 11, letterSpacing: "0.10em", fontWeight: 800, color: "var(--ink-muted)" }}>PRÓXIMAMENTE</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {[
@@ -250,7 +278,6 @@ export function WineSheet({ wine, onClose }: Props) {
             </div>
           </div>
 
-          {/* Acciones */}
           <div style={{ display: "grid", gap: 10 }}>
             <a
               href={waHref}

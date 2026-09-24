@@ -7,8 +7,8 @@ export function Header() {
         position: "sticky",
         top: 0,
         zIndex: 40,
-        background: "rgba(248, 245, 239, 0.92)",
-        backdropFilter: "blur(12px)",
+        background: "rgba(248, 245, 239, 0.96)",
+        backdropFilter: "blur(10px)",
         borderBottom: "1px solid var(--line)",
       }}
     >
@@ -22,7 +22,6 @@ export function Header() {
           gap: 12,
         }}
       >
-        {/* Marca */}
         <a
           href="#"
           aria-label="La Vinícola Mendoza - inicio"
@@ -35,16 +34,16 @@ export function Header() {
         >
           <span
             style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
+              width: 32,
+              height: 32,
+              borderRadius: 8,
               background: "var(--navy)",
               color: "var(--gold)",
               display: "grid",
               placeItems: "center",
               fontFamily: "ui-serif, Georgia, serif",
               fontWeight: 800,
-              fontSize: 16,
+              fontSize: 14,
               letterSpacing: "0.04em",
               flex: "0 0 auto",
             }}
@@ -57,7 +56,7 @@ export function Header() {
                 display: "block",
                 fontFamily: "ui-serif, Georgia, serif",
                 fontWeight: 800,
-                fontSize: 13,
+                fontSize: 12.5,
                 letterSpacing: "0.14em",
                 lineHeight: 1,
                 color: "var(--navy)",
@@ -68,8 +67,8 @@ export function Header() {
             <span
               style={{
                 display: "block",
-                fontSize: 11,
-                letterSpacing: "0.12em",
+                fontSize: 10,
+                letterSpacing: "0.10em",
                 color: "var(--ink-muted)",
                 lineHeight: 1,
                 marginTop: 2,
@@ -80,7 +79,6 @@ export function Header() {
           </span>
         </a>
 
-        {/* Acciones */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "0 0 auto" }}>
           <a
             href={business.maps}
@@ -91,19 +89,18 @@ export function Header() {
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              height: 36,
-              padding: "0 12px",
+              height: 32,
+              padding: "0 10px",
               borderRadius: 999,
               border: "1px solid var(--line-strong)",
               background: "var(--white)",
               color: "var(--navy)",
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: 600,
               whiteSpace: "nowrap",
             }}
           >
             <span aria-hidden>📍</span>
-            <span style={{ display: "none" } as React.CSSProperties}>Maps</span>
             <span className="hide-mobile">Cómo llegar</span>
           </a>
           <a
@@ -115,15 +112,15 @@ export function Header() {
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              width: 36,
-              height: 36,
+              width: 32,
+              height: 32,
               borderRadius: 999,
               background: "var(--navy)",
               color: "var(--gold-light)",
               border: "1px solid var(--navy-soft)",
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <rect x="2" y="2" width="20" height="20" rx="5" />
               <circle cx="12" cy="12" r="5" />
               <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />

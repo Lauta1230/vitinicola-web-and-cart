@@ -45,114 +45,133 @@ export function Catalog({ wines, query, bodega, onOpen }: Props) {
     );
   }
 
-  // Cuando hay búsqueda activa, mostrar en grilla plana para comparar rápido
+  // Cuando hay búsqueda activa: grilla plana con bodega visible
   if (isFiltered) {
     return (
       <div>
         <div
           style={{
-            fontSize: 11,
-            letterSpacing: "0.08em",
+            fontSize: 10,
+            letterSpacing: "0.10em",
             fontWeight: 800,
-            color: "var(--ink-muted)",
+            color: "var(--gold-muted)",
             marginBottom: 10,
             paddingLeft: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
           }}
         >
+          <span style={{ width: 18, height: 1, background: "var(--line-strong)", display: "inline-block" }} />
           RESULTADOS · {wines.length} ETIQUETAS
+          <span style={{ width: 18, height: 1, background: "var(--line-strong)", display: "inline-block" }} />
         </div>
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 158px), 1fr))",
-            gap: 10,
+            gridTemplateColumns: "1fr",
+            gap: 8,
           }}
         >
           {wines.map((w) => (
-            <WineCard key={w.id} wine={w} onOpen={onOpen} />
+            <WineCard key={w.id} wine={w} onOpen={onOpen} showBodega />
           ))}
         </div>
       </div>
     );
   }
 
-  // Sin filtros: agrupado por bodega, para explorar 659 sin abrumar
+  // Sin filtros: carta editorial agrupada por bodega
   return (
-    <div style={{ display: "grid", gap: 18 }}>
+    <div style={{ display: "grid", gap: 22 }}>
       {grouped.map(([bodegaName, items]) => (
         <section
           key={bodegaName}
+          aria-label={bodegaName}
           style={{
-            background: "var(--paper-warm)",
-            border: "1px solid var(--line)",
-            borderRadius: 16,
-            overflow: "hidden",
-            boxShadow: "0 2px 10px rgba(15,46,64,0.04)",
+            background: "transparent",
+            border: "none",
           }}
         >
+          {/* Encabezado de sección tipo carta */}
           <div
             style={{
               display: "flex",
-              alignItems: "center",
+              alignItems: "baseline",
               justifyContent: "space-between",
-              gap: 10,
-              padding: "12px 14px",
-              borderBottom: "1px solid var(--line)",
-              background: "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(248,245,239,0.9))",
-              position: "sticky",
-              top: "var(--header-h)",
-              zIndex: 5,
-              backdropFilter: "blur(8px)",
+              gap: 12,
+              paddingBottom: 8,
+              borderBottom: "1px solid var(--line-strong)",
+              marginBottom: 10,
             }}
           >
             <div style={{ minWidth: 0 }}>
-              <div
+              <h2
                 style={{
+                  margin: 0,
                   fontFamily: "ui-serif, Georgia, serif",
                   fontWeight: 800,
-                  fontSize: 14,
+                  fontSize: 15,
+                  letterSpacing: "0.08em",
                   color: "var(--navy)",
-                  lineHeight: 1.2,
+                  lineHeight: 1.1,
+                  textTransform: "uppercase",
                 }}
               >
                 {bodegaName}
-              </div>
-              <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2, letterSpacing: "0.06em", fontWeight: 600 }}>
-                {items.length} etiquetas · pág. {items[0]?.pagina_carta}
-              </div>
+              </h2>
+              <div
+                style={{
+                  marginTop: 4,
+                  height: 2,
+                  width: 32,
+                  background: "var(--gold)",
+                  borderRadius: 999,
+                }}
+                aria-hidden
+              />
             </div>
-            <span
-              style={{
-                flex: "0 0 auto",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minWidth: 34,
-                height: 28,
-                padding: "0 8px",
-                borderRadius: 999,
-                background: "var(--navy)",
-                color: "var(--paper-warm)",
-                fontSize: 12,
-                fontWeight: 800,
-              }}
-            >
-              {items.length}
-            </span>
-          </div>
 
-          <div style={{ padding: 10 }}>
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 158px), 1fr))",
-                gap: 10,
+                flex: "0 0 auto",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 11,
+                color: "var(--ink-muted)",
+                fontWeight: 600,
+                letterSpacing: "0.06em",
+                whiteSpace: "nowrap",
               }}
             >
-              {items.map((w) => (
-                <WineCard key={w.id} wine={w} onOpen={onOpen} />
-              ))}
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: 22,
+                  height: 22,
+                  padding: "0 6px",
+                  borderRadius: 999,
+                  background: "var(--paper-dark)",
+                  border: "1px solid var(--line)",
+                  color: "var(--ink-soft)",
+                  fontSize: 10,
+                  fontWeight: 800,
+                }}
+              >
+                {items.length}
+              </span>
+              <span style={{ opacity: 0.7 }}>pág. {items[0]?.pagina_carta}</span>
             </div>
+          </div>
+
+          {/* Lista de vinos estilo carta: una columna, filas elegantes */}
+          <div style={{ display: "grid", gap: 8 }}>
+            {items.map((w) => (
+              <WineCard key={w.id} wine={w} onOpen={onOpen} showBodega={false} />
+            ))}
           </div>
         </section>
       ))}

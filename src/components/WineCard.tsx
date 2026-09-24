@@ -4,10 +4,12 @@ import { formatARS } from "../utils/formatPrice";
 type Props = {
   wine: Wine;
   onOpen: (wine: Wine) => void;
+  // Cuando se muestra agrupado por bodega, la bodega ya está en el encabezado de sección:
+  // no repetir badge para reforzar la jerarquía de carta.
+  showBodega?: boolean;
 };
 
-export function WineCard({ wine, onOpen }: Props) {
-  const initial = (wine.bodega || wine.categoria_carta || "?").trim().charAt(0).toUpperCase();
+export function WineCard({ wine, onOpen, showBodega = true }: Props) {
   const hasAnada = wine.anada != null && String(wine.anada).trim() !== "";
 
   return (
@@ -23,124 +25,109 @@ export function WineCard({ wine, onOpen }: Props) {
       }}
       aria-label={`${wine.nombre_completo_visible}, ${wine.bodega} — ${formatARS(wine.precio)}`}
       style={{
-        background: "var(--white)",
+        background: "var(--paper-warm)",
         border: "1px solid var(--line)",
-        borderRadius: 16,
-        padding: 12,
+        borderLeft: "3px solid rgba(201,168,106,0.0)",
+        borderRadius: 14,
+        padding: "12px 12px",
         display: "flex",
-        flexDirection: "column",
-        gap: 10,
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
         cursor: "pointer",
-        transition: "transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease",
-        boxShadow: "0 2px 10px rgba(15,46,64,0.06)",
-        minHeight: 132,
+        transition: "background 0.12s ease, border-color 0.12s ease, transform 0.12s ease",
+        minHeight: 64,
       }}
       onPointerEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
-        (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow)";
-        (e.currentTarget as HTMLElement).style.borderColor = "var(--line-strong)";
+        const el = e.currentTarget as HTMLElement;
+        el.style.background = "var(--white)";
+        el.style.borderLeftColor = "var(--gold)";
+        el.style.borderColor = "var(--line-strong)";
       }}
       onPointerLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
-        (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 10px rgba(15,46,64,0.06)";
-        (e.currentTarget as HTMLElement).style.borderColor = "var(--line)";
+        const el = e.currentTarget as HTMLElement;
+        el.style.background = "var(--paper-warm)";
+        el.style.borderLeftColor = "rgba(201,168,106,0.0)";
+        el.style.borderColor = "var(--line)";
       }}
     >
-      {/* Top: bodega + añada */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-        <span
+      {/* Izquierda: nombre + bodega sutil */}
+      <div style={{ minWidth: 0, flex: "1 1 auto" }}>
+        {showBodega && (
+          <div
+            style={{
+              fontSize: 10,
+              letterSpacing: "0.10em",
+              fontWeight: 700,
+              color: "var(--gold-muted)",
+              lineHeight: 1,
+              marginBottom: 4,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {wine.bodega}
+            {hasAnada ? ` · ${wine.anada}` : ""}
+          </div>
+        )}
+        {!showBodega && hasAnada && (
+          <div
+            style={{
+              fontSize: 10,
+              letterSpacing: "0.08em",
+              fontWeight: 700,
+              color: "var(--gold-muted)",
+              lineHeight: 1,
+              marginBottom: 4,
+            }}
+          >
+            AÑADA {String(wine.anada)}
+          </div>
+        )}
+        <h3
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            minWidth: 0,
-            fontSize: 11,
-            letterSpacing: "0.08em",
-            fontWeight: 700,
-            color: "var(--navy)",
-            background: "var(--paper-dark)",
-            border: "1px solid var(--line)",
-            padding: "6px 8px",
-            borderRadius: 999,
-            maxWidth: "75%",
+            margin: 0,
+            fontFamily: "ui-serif, Georgia, serif",
+            fontSize: 14.5,
+            lineHeight: 1.32,
+            fontWeight: 650,
+            color: "var(--ink)",
+            // En carta, el nombre debe leerse completo sin truncar agresivo
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
           }}
         >
-          <span
-            aria-hidden
-            style={{
-              width: 20,
-              height: 20,
-              borderRadius: 999,
-              background: "var(--navy)",
-              color: "var(--gold)",
-              display: "grid",
-              placeItems: "center",
-              fontSize: 11,
-              fontWeight: 800,
-              flex: "0 0 auto",
-            }}
-          >
-            {initial}
-          </span>
-          <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{wine.bodega}</span>
-        </span>
-
-        {hasAnada && (
-          <span
-            style={{
-              flex: "0 0 auto",
-              fontSize: 11,
-              fontWeight: 800,
-              letterSpacing: "0.06em",
-              color: "var(--gold-muted)",
-              background: "rgba(201,168,106,0.12)",
-              border: "1px solid rgba(201,168,106,0.22)",
-              padding: "6px 8px",
-              borderRadius: 999,
-            }}
-          >
-            {String(wine.anada)}
-          </span>
+          {wine.nombre_completo_visible}
+        </h3>
+        {!showBodega && (
+          <div style={{ fontSize: 11, color: "var(--ink-muted)", marginTop: 2, lineHeight: 1, letterSpacing: "0.02em" }}>
+            pág. {wine.pagina_carta}
+          </div>
         )}
       </div>
 
-      {/* Nombre */}
-      <h3
-        style={{
-          margin: 0,
-          fontFamily: "ui-serif, Georgia, serif",
-          fontSize: 14,
-          lineHeight: 1.32,
-          fontWeight: 700,
-          color: "var(--ink)",
-          display: "-webkit-box",
-          WebkitLineClamp: 3,
-          WebkitBoxOrient: "vertical",
-          overflow: "hidden",
-          minHeight: 54,
-        }}
-      >
-        {wine.nombre_completo_visible}
-      </h3>
-
-      {/* Precio + acción */}
+      {/* Derecha: precio + flecha */}
       <div
         style={{
-          marginTop: "auto",
+          flex: "0 0 auto",
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
-          paddingTop: 8,
-          borderTop: "1px solid var(--line)",
+          gap: 10,
+          minWidth: 92,
+          justifyContent: "flex-end",
         }}
       >
         <span
           style={{
-            fontSize: 15,
+            fontSize: 14,
             fontWeight: 800,
             letterSpacing: "-0.01em",
             color: "var(--navy)",
+            whiteSpace: "nowrap",
+            textAlign: "right",
           }}
         >
           {formatARS(wine.precio)}
@@ -148,30 +135,21 @@ export function WineCard({ wine, onOpen }: Props) {
         <span
           aria-hidden
           style={{
-            width: 28,
-            height: 28,
+            width: 26,
+            height: 26,
             borderRadius: 999,
-            background: "var(--navy)",
-            color: "var(--paper-warm)",
+            background: "var(--paper-dark)",
+            border: "1px solid var(--line)",
+            color: "var(--ink-muted)",
             display: "grid",
             placeItems: "center",
             fontSize: 12,
+            flex: "0 0 auto",
           }}
         >
           ›
         </span>
       </div>
-
-      {/* Representación editorial sutil (no foto de botella inventada) */}
-      <div
-        aria-hidden
-        style={{
-          position: "relative",
-          height: 1,
-          background: `linear-gradient(90deg, rgba(201,168,106,0.0), rgba(201,168,106,0.22), rgba(201,168,106,0.0))`,
-          marginTop: 2,
-        }}
-      />
     </article>
   );
 }
